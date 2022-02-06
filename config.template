@@ -1,0 +1,28 @@
+{
+	"password_file": ".restic.pass",
+	"exclude_file": "excludes.txt",
+	"sftp": [
+		{
+			"host": "Host from ssh config file",
+			"src": "Syncing source path",
+			"dest": "Syncing destination path"
+		},
+		{
+			"host": "Host from ssh config file",
+			"src": "Syncing source path",
+			"dest": "Syncing destination path"
+		},
+		...
+	],
+	"local": [
+		{
+			"src": "Syncing source path",
+			"dest": "Syncing destination path"
+		},
+		{
+			"src": "Syncing source path",
+			"dest": "Syncing destination path"
+		},
+		...
+	]
+}
