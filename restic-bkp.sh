@@ -3,8 +3,22 @@
 # Backup files with custom configuration using restic
 
 
-# Script var
-_VERSION=0.1.0
+#  var
+declare -r _VERSION=0.1.0
+
+declare -r -A _FORGET_POLICY=(
+    ["keep_last"]="keep-last"
+    ["keep_hourly"]="keep-hourly"
+    ["keep_daily"]="keep-daily"
+    ["keep_weekly"]="keep-weekly"
+    ["keep_monthly"]="keep-monthly"
+    ["keep_yearly"]="keep-yearly"
+    ["keep_within"]="keep-within"
+    ["keep_within_hourly"]="keep-within-hourly"
+    ["keep_within_daily"]="keep-within-daily"
+    ["keep_within_monthly"]="keep-within-monthly"
+    ["keep_within_yearly"]="keep-within-yearly"
+)
 
 # ----------------------------------------------------------------------------
 # Show script usage
@@ -126,8 +140,6 @@ else
     exit 1
 fi
 
-# TODO: Check for empty config value (host / src / dest)
-
 echo "Backup type: ${_backup_type}"
 echo "Secret password file: ${_password_file}"
 echo "Exclude content file: ${_exclude_file}"
@@ -149,10 +161,28 @@ case ${_action} in
         done
         ;;
     backup)
+        _snapshots_policy=$(jq '.snapshots_policy' ${_config})
+        _forget_options=""
+        if [[ "${_snapshots_policy}" != "null" ]]; then
+            _policies=($(echo ${_snapshots_policy} | jq -r 'keys[]'))
+            for _policy in ${_policies[@]}; do
+                if [[ "${_FORGET_POLICY[${_policy}]}" == "" ]]; then
+                    echo "[ERROR] invalid snapshot policy: ${_policy}"
+                    exit 1
+                fi
+                _policy_flag=${_FORGET_POLICY[${_policy}]}
+                _value=$(echo ${_snapshots_policy} | jq -r --arg policy "${_policy}" '.[$policy]')
+                _forget_options="${_forget_options} --${_policy_flag} ${_value}"
+            done
+        fi
         for (( i=0; i<${#_src_repos[@]}; i++ )); do
             echo "[INFO] Source: ${_src_repos[${i}]}, Destination: ${_dest_repos[${i}]}"
             restic backup -v -r ${_dest_repos[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} ${_src_repos[${i}]}
-            restic prune -r ${_dest_repos[${i}]} --password-file ${_password_file}
+            if [[ "${_forget_options}" == "" ]]; then
+                restic prune -r ${_dest_repos[${i}]} --password-file ${_password_file}
+            else
+                restic forget -v -r ${_dest_repos[${i}]} --password-file ${_password_file} ${_forget_options} --prune
+            fi
             echo ""
         done
         ;;

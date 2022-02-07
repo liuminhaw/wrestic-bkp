@@ -16,7 +16,12 @@ restic need to be installed before using this script
 
 ## Setup
 #### Configuration
-Set backup information (source, destination, password, exclusion)
+Set backup information (source, destination, password, exclusion, sna)
+- password file
+- exclusive file
+- source
+- destination
+- snapshot policy
 
 #### Usage
 ```

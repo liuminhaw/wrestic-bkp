@@ -24,5 +24,11 @@
 			"dest": "Syncing destination path"
 		},
 		...
-	]
+	],
+	"snapshots_policy": {
+		"keep_daily": 7,
+		"keep_weekly": 5,
+		"keep_monthly": 12,
+		"keep_yearly": 3
+	}
 }
