@@ -4,7 +4,7 @@
 
 
 #  var
-declare -r _VERSION=0.1.0
+declare -r _VERSION=0.1.1
 
 declare -r -A _FORGET_POLICY=(
     ["keep_last"]="keep-last"
@@ -27,8 +27,11 @@ declare -r -A _FORGET_POLICY=(
 # ----------------------------------------------------------------------------
 show_help() {
 cat << EOF
-Usage: ${0##*/} [--help] [--version] [--type=local|sftp] backup|init|snapshots
+Usage: ${0##*/} [--help] [--version] [--config=CONFIG_FILE] [--type=local|sftp] backup|init|snapshots
     --help                      Display this help message and exit
+    --config=CONFIG_FILE
+    --config CONFIG_FILE        Specify which configuration file to use when running the script
+                                Default config file: config.json
     --type=[local|sftp]         
     --type [local|sftp]         Specify backup destination type: (local, sftp)
                                 Default type: local
@@ -54,6 +57,22 @@ while :; do
         --version)
             echo "Version: ${_VERSION}"
             exit
+            ;;
+        --config)
+            if [[ "${2}" ]]; then
+                _config=${2}
+                shift
+            else
+                echo -e "[ERROR] '--config' requires a non-empty option argument." 1>&2
+                exit 1
+            fi
+            ;;
+        --config=?*)
+            _config=${1#*=} # Delete everything up to "=" and assign the remainder
+            ;;
+        --config=)
+            echo -e "[ERROR] '--config' requires a non-empty option argument." 1>&2
+            exit 1
             ;;
         --type)
             if [[ "${2}" ]]; then
