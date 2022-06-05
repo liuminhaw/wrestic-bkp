@@ -9,6 +9,7 @@ Backup files with custom configuration using restic
 
 ## Version
 ### v0.1.1
+- Refactor script with functions and main functions
 - Add cli --config option to specify which file to read in as configuration setting 
     - Default config file is `config.json` if `--config` option is not used
 - New `mount` action which enable browsing backup as a regular file system
