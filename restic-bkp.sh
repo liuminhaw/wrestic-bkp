@@ -384,24 +384,22 @@ restic_backup() {
 # Arguments:
 #   config filename / filepath
 #   key name of mount point in configuration
-#   restic password filepath
 # Returns:
 #   non-zero on error
 # ---------------------------------------------------------------------------
 restic_mount() {
-    if [[ "${#}" -ne 3 ]]; then
+    if [[ "${#}" -ne 2 ]]; then
         echo "[ERROR] Function ${FUNCNAME} usage error" >&2
         return 2
     fi
 
     local _config=${1}
     local _mount_point=${2}
-    local _password_file=${3}
 
     read_mount_point ${_config} ${_mount_point}
     (( ${?} == 0 )) || return 1
 
-    restic -r ${_SRC_REPOS[0]} --password-file ${_password_file} mount ${_DEST_REPOS[0]}
+    restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]}
 }
 
 main() {
@@ -509,7 +507,7 @@ main() {
             (( ${?} == 0 )) || exit 1
         ;;
         mount)
-            restic_mount ${_config} ${_mount_point} ${_password_file}
+            restic_mount ${_config} ${_mount_point}
             (( ${?} == 0 )) || exit 1
         ;;
         snapshots)
