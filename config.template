@@ -11,8 +11,7 @@
 			"host": "Host from ssh config file",
 			"src": "Syncing source path",
 			"dest": "Syncing destination path"
-		},
-		...
+		}
 	],
 	"local": [
 		{
@@ -22,9 +21,21 @@
 		{
 			"src": "Syncing source path",
 			"dest": "Syncing destination path"
-		},
-		...
+		}
 	],
+	"mount": {
+        "mount_point_1": {
+			"type": "local",
+            "src": "restic backup location",
+            "dest": "Local mount point destination"
+        },
+        "mount_point_2": {
+			"type": "sftp",
+			"host": "Host from ssh config file",
+            "src": "restic backup location",
+            "dest": "Local mount point desitnation"
+        }
+    },
 	"snapshots_policy": {
 		"keep_daily": 7,
 		"keep_weekly": 5,

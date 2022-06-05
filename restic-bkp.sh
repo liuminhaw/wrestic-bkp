@@ -3,7 +3,7 @@
 # Backup files with custom configuration using restic
 
 
-#  var
+# Global variables
 declare -r _VERSION=0.1.1
 
 declare -r _SCRIPT=$(readlink -f "${0}")
@@ -103,6 +103,75 @@ check_config_required_file() {
     echo "${_file}"
 }
 
+# -------------------------------------------------------------------------------------------------
+# Read mount point configuration
+# Arguments:
+#   config filename / filepath
+#   key name of mount point in configuration
+# Globals:
+#   _DEST_REPOS
+#   _SRC_REPOS
+# Outputs:
+#   Write error messages to stderr
+# Returns:
+#   non-zero on error
+# -------------------------------------------------------------------------------------------------
+read_mount_point() {
+    if [[ "${#}" -ne 2 ]]; then
+        echo "[ERROR] Function ${FUNCNAME} usage error" >&2
+        return 2
+    fi
+
+    local _config=${1}
+    local _mount_point=${2}
+
+    # Check mount point key existense
+    if [[ $(jq --arg _mp "${_mount_point}" '.mount | has($_mp)' ${_config}) != "true" ]]; then
+        echo "[ERROR] .mount.${_mount_point} not set" >&2
+        return 1
+    fi
+
+    local _type=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].type' ${_config})
+    if [[ "${_type}" != "local" && "${_type}" != "sftp" ]]; then
+        echo "[ERROR] .mount.${_mount_point}.type value not set or invalid" >&2
+        return 1
+    fi
+
+    local _host=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].host' ${_config})
+    if [[ "${_type}" == "sftp" && "${_host}" == "null" ]]; then
+        echo "[ERROR] .mount.${_mount_point}.host value not set with type ${_type}" >&2
+        return 1
+    fi
+
+    local _src=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].src' ${_config})
+    if [[ "${_src}" == "null" ]]; then 
+        echo "[ERROR] .mount.${_mount_point}.src value not set" >&2
+        return 1
+    fi
+
+    local _dest=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].dest' ${_config})
+    if [[ "${_dest}" == "null" ]]; then 
+        echo "[ERROR] .mount.${_mount_point}.dest value not set" >&2
+        return 1
+    elif [[ ! -d "${_dest}" ]]; then
+        echo "[ERROR] destination repository ${_dest} not exist" >&2
+        return 1
+    fi
+
+    _DEST_REPOS[0]="${_dest}"
+    case ${_type} in 
+        local)
+            _SRC_REPOS[0]="${_src}"
+        ;;
+        sftp)
+            _SRC_REPOS[0]="sftp:${_host}:${_src}"
+        ;;
+        *)
+            echo "[ERROR] invalid type value: ${_type}"
+            return 1
+    esac
+}
+
 # -------------------------------------------------------------------------------
 # Read local block configuration 
 # Arguments:
@@ -188,7 +257,7 @@ summarize_backup_config() {
             (( ${?} == 0 )) || return 1
         ;;
         *)
-        return 1
+            return 1
     esac
 }
 
@@ -310,6 +379,31 @@ restic_backup() {
     done
 }
 
+# ---------------------------------------------------------------------------
+# Mount restic backup as regular file system for browsing / restore
+# Arguments:
+#   config filename / filepath
+#   key name of mount point in configuration
+#   restic password filepath
+# Returns:
+#   non-zero on error
+# ---------------------------------------------------------------------------
+restic_mount() {
+    if [[ "${#}" -ne 3 ]]; then
+        echo "[ERROR] Function ${FUNCNAME} usage error" >&2
+        return 2
+    fi
+
+    local _config=${1}
+    local _mount_point=${2}
+    local _password_file=${3}
+
+    read_mount_point ${_config} ${_mount_point}
+    (( ${?} == 0 )) || return 1
+
+    restic -r ${_SRC_REPOS[0]} --password-file ${_password_file} mount ${_DEST_REPOS[0]}
+}
+
 main() {
     local _backup_type="local"
     local _config="${_SCRIPT_DIR}/config.json"
@@ -368,11 +462,15 @@ main() {
         shift
     done
 
-    if [[ ${#} != 1 ]]; then
+    if [[ ${#} -eq 1 && ${1} != "mount" ]]; then
+        local _action=${1}
+    elif [[ ${#} -eq 2 && ${1} == "mount" ]]; then
+        local _action=${1}
+        local _mount_point=${2}
+    else
         show_help
         exit 1
     fi
-    local _action=${1}
 
     if [[ ! " ${_VALID_ACTIONS[*]} " =~ " ${_action} " ]]; then
         show_help
@@ -402,16 +500,20 @@ main() {
     echo ""
 
     case ${_action} in
+        backup)
+            restic_backup ${_backup_type} ${_config} ${_password_file} ${_exclude_file}
+            (( ${?} == 0 )) || exit 1
+        ;;
         init)
             restic_init ${_backup_type} ${_config} ${_password_file}
             (( ${?} == 0 )) || exit 1
         ;;
-        snapshots)
-            restic_snapshots ${_backup_type} ${_config} ${_password_file}
+        mount)
+            restic_mount ${_config} ${_mount_point} ${_password_file}
             (( ${?} == 0 )) || exit 1
         ;;
-        backup)
-            restic_backup ${_backup_type} ${_config} ${_password_file} ${_exclude_file}
+        snapshots)
+            restic_snapshots ${_backup_type} ${_config} ${_password_file}
             (( ${?} == 0 )) || exit 1
         ;;
         *)
