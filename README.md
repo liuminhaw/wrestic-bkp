@@ -9,23 +9,33 @@ Backup files with custom configuration using restic
 
 ## Version
 ### v0.1.1
+- Refactor script with functions and main functions
 - Add cli --config option to specify which file to read in as configuration setting 
     - Default config file is `config.json` if `--config` option is not used
+- New `mount` action which enable browsing backup as a regular file system
+	- Using [restic's mount](https://restic.readthedocs.io/en/latest/050_restore.html#restore-using-mount) feature 
 
 **More versions information:** [Versions Documentation](https://mewing-pisces-b2c.notion.site/restic-bkp-1b852fb0215a4e1d8df00081f3050e1b) 
 
 ## Usage
 ```
-Usage: restic-bkp.sh [--help] [--version] [--type=local|sftp] backup|init|snapshots
+Usage:  restic-bkp.sh [--help] [--version] [--config=CONFIG_FILE] [--type=local|sftp] backup|init|mount|snapshots
+        restic-bkp.sh [--help] [--version] [--config=CONFIG_FILE] mount MP
+
     --help                      Display this help message and exit
+    --config=CONFIG_FILE
+    --config CONFIG_FILE        Specify which configuration file to use when running the script
+                                Default config file: config.json
     --type=[local|sftp]         
     --type [local|sftp]         Specify backup destination type: (local, sftp)
                                 Default type: local
     --version                   Show version information
-    action                      Command to execute: (backup, init, snapshots)
-                                backup: create new backup snapshot
-                                init: prepare backup destination directory
-                                snapshots: list previous snapshots
+
+    backup                      Create new backup snapshot
+    init                        Prepare backup destination repository
+    mount MP                    Mounting backup repository for browsing or restoring
+                                MP: Mount point name in configuration .restore block
+    snapshots                   List history snapshots
 ```
 
 ## Setup
@@ -39,6 +49,7 @@ Set backup information (source, destination, password, exclusion, snapshot polic
     - source - Backup source path
     - destination - Backup destination path
     - host (`sftp` type only) - host name set in ssh config file
+- [mount](#mount) - mounts configuration to read using `mount` action
 - [snapshot policy](#snapshot-policy) - Rules to indicate which snapshots to keep / remove
 
 Configuration file can be copied and edit from `config.template`
@@ -66,11 +77,11 @@ here
 Supported type making restic backup
 
 ##### local
-At local direcotry of disk. Local is the default backup type if no `--type` option is specified.
+At local directory of disk. Local is the default backup type if no `--type` option is specified.
 
 Local configuration block is consist of an array with pairs of `src` and `dest` set.
-- source - Backup source path
-- destination - Backup destination path
+- source: Backup source path
+- destination: Backup destination path
 
 ```json
 "local": [
@@ -89,9 +100,9 @@ Local configuration block is consist of an array with pairs of `src` and `dest` 
 Backup via SFTP with SSH. To use `sftp` type on backup, set `--type` option with `sftp` value
 
 SFTP configuration block is consist of an array with pairs of `host`, `src`, and `dest` set. 
-- source - Backup source path
-- destination - Backup destination path
-- host (`sftp` type only) - host name set in ssh config file 
+- source: Backup source path
+- destination: Backup destination path
+- host (`sftp` type only): host name set in ssh config file 
 
 ```json
 "sftp": [
@@ -108,6 +119,41 @@ SFTP configuration block is consist of an array with pairs of `host`, `src`, and
 ]
 
 ```
+
+#### Mount
+Mount points (MP value in help message) to indicate when using `mount` action
+
+Read configuration from given argument and mount with according block settings
+
+Supporting methods: `local` `sftp`
+
+##### local
+Snapshot is backup on local directory or disk
+```json
+"mount_point_name": {
+	"type": "local",
+	"src": "restic backup location",
+	"dest": "Local mount point destination"
+}
+```
+- type: Specified `local` type is used
+- src: Restic backup repository path
+- dest: Mount point to serve the repository
+
+##### sftp
+Snapshot is backup using SFTP
+```json
+"mount_point_name": {
+	"type": "sftp",
+	"host": "Host from ssh config file",
+	"src": "restic backup location",
+	"dest": "Local mount point desitnation"
+}
+```
+- type: Specified `sftp` type is used
+- host: SSH host name set in ssh config file
+- src: Restic backup repository path
+- dest: Mount point to serve the repository
 
 #### Snapshot policy
 Set policies to indicate which snapshots to keep and which snapshots to remove
