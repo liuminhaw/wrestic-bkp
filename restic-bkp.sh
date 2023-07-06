@@ -92,7 +92,7 @@ check_config_required_file() {
     esac
     
     # Using absolute filepath if not already set
-    if [[ "${_file}" = /* ]]; then
+    if [[ "${_file}" != /* ]]; then
         _file=${_SCRIPT_DIR}/${_file}
     fi
 
