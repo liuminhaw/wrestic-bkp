@@ -22,6 +22,12 @@ jobs:
           mkdir -p ${RELEASE_PATH}
           cp -r checkout-dest/* ${RELEASE_PATH}
           tar -czf ${RELEASE_PKG} ${RELEASE_PATH}
+          cp checkout-dest/CHANGELOG.md .
+      - name: Check
+        run: |
+          echo "Check files"
+          ls -la ${RELEASE_PATH}
+          tar -tzf ${RELEASE_PKG}
       - name: Release
         uses: docker://antonyurchenko/git-release:v5
         env:
