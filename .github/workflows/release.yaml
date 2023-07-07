@@ -9,8 +9,8 @@ jobs:
   pack_and_release:
     runs-on: ubuntu-latest
     env:
-      RELEASE_PATH: restic-bkp_$GITHUB_REF_NAME
-      RELEASE_PKG: restic-bkp_$GITHUB_REF_NAME.tar.gz
+      RELEASE_PATH: restic-bkp_${{ github.ref_name }}
+      RELEASE_PKG: restic-bkp_${{ github.ref_name }}.tar.gz
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
