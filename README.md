@@ -1,25 +1,19 @@
 # restic-bkp
 Backup files with custom configuration using restic
 
+## Roadmap
+[Project Roadmap](https://mewing-pisces-b2c.notion.site/restic-bkp-1b852fb0215a4e1d8df00081f3050e1b) 
+
 ## Pre-requisite
-1. restic need to be installed before executing the script  
+1. `restic` need to be installed before executing the script <br>
 **reference:** [Installation](https://restic.readthedocs.io/en/latest/020_installation.html)
-1. jq need to be installed before executing the script
+1. `jq` need to be installed before executing the script <br>
 **reference:** [Installation](https://stedolan.github.io/jq/download/)
 
-## Version
-### v0.1.1
-- Refactor script with functions and main functions
-- Add cli --config option to specify which file to read in as configuration setting 
-    - Default config file is `config.json` if `--config` option is not used
-- New `mount` action which enable browsing backup as a regular file system
-	- Using [restic's mount](https://restic.readthedocs.io/en/latest/050_restore.html#restore-using-mount) feature 
-
-**More versions information:** [Versions Documentation](https://mewing-pisces-b2c.notion.site/restic-bkp-1b852fb0215a4e1d8df00081f3050e1b) 
 
 ## Usage
 ```
-Usage:  restic-bkp.sh [--help] [--version] [--config=CONFIG_FILE] [--type=local|sftp] backup|init|mount|snapshots
+Usage:  restic-bkp.sh [--help] [--version] [--config=CONFIG_FILE] [--type=local|sftp] backup|init|snapshots
         restic-bkp.sh [--help] [--version] [--config=CONFIG_FILE] mount MP
 
     --help                      Display this help message and exit
@@ -85,14 +79,14 @@ Local configuration block is consist of an array with pairs of `src` and `dest` 
 
 ```json
 "local": [
-		{
-			"src": "Syncing source path",
-			"dest": "Syncing destination path"
-		},
-		{
-			"src": "Syncing source path",
-			"dest": "Syncing destination path"
-		}
+    {
+        "src": "Syncing source path",
+        "dest": "Syncing destination path"
+    },
+    {
+        "src": "Syncing source path",
+        "dest": "Syncing destination path"
+    }
 ]
 ```
 
@@ -106,16 +100,16 @@ SFTP configuration block is consist of an array with pairs of `host`, `src`, and
 
 ```json
 "sftp": [
-		{
-			"host": "Host from ssh config file",
-			"src": "Syncing source path",
-			"dest": "Syncing destination path"
-		},
-		{
-			"host": "Host from ssh config file",
-			"src": "Syncing source path",
-			"dest": "Syncing destination path"
-		}
+    {
+        "host": "Host from ssh config file",
+        "src": "Syncing source path",
+        "dest": "Syncing destination path"
+    },
+    {
+        "host": "Host from ssh config file",
+        "src": "Syncing source path",
+        "dest": "Syncing destination path"
+    }
 ]
 
 ```
@@ -131,9 +125,9 @@ Supporting methods: `local` `sftp`
 Snapshot is backup on local directory or disk
 ```json
 "mount_point_name": {
-	"type": "local",
-	"src": "restic backup location",
-	"dest": "Local mount point destination"
+    "type": "local",
+    "src": "restic backup location",
+    "dest": "Local mount point destination"
 }
 ```
 - type: Specified `local` type is used
@@ -144,10 +138,10 @@ Snapshot is backup on local directory or disk
 Snapshot is backup using SFTP
 ```json
 "mount_point_name": {
-	"type": "sftp",
-	"host": "Host from ssh config file",
-	"src": "restic backup location",
-	"dest": "Local mount point desitnation"
+    "type": "sftp",
+    "host": "Host from ssh config file",
+    "src": "restic backup location",
+    "dest": "Local mount point desitnation"
 }
 ```
 - type: Specified `sftp` type is used
@@ -177,10 +171,10 @@ For more policy explanation, please checkout restic's [document page](https://re
 
 ```json
 "snapshots_policy": {
-		"keep_daily": 7,
-		"keep_weekly": 5,
-		"keep_monthly": 12,
-		"keep_yearly": 3
+    "keep_daily": 7,
+    "keep_weekly": 5,
+    "keep_monthly": 12,
+    "keep_yearly": 3
 }
 
 ```
