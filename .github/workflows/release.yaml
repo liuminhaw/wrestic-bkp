@@ -9,8 +9,8 @@ jobs:
   pack_and_release:
     runs-on: ubuntu-latest
     env:
-      RELEASE_PATH: restic-bkp_${GITHUB_REF_NAME}
-      RELEASE_PKG: restic-bkp_${GITHUB_REF_NAME}.tar.gz
+      RELEASE_PATH: restic-bkp_$GITHUB_REF_NAME
+      RELEASE_PKG: restic-bkp_$GITHUB_REF_NAME.tar.gz
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -19,18 +19,18 @@ jobs:
       - name: Pack
         run: |
           echo "Pack files"
-          mkdir -p ${RELEASE_PATH}
-          cp -r checkout-dest/* ${RELEASE_PATH}
-          tar -czf ${RELEASE_PKG} ${RELEASE_PATH}
+          mkdir -p $RELEASE_PATH
+          cp -r checkout-dest/* $RELEASE_PATH
+          tar -czf $RELEASE_PKG $RELEASE_PATH
           cp checkout-dest/CHANGELOG.md .
       - name: Check
         run: |
           echo "Check files"
-          ls -la ${RELEASE_PATH}
-          tar -tzf ${RELEASE_PKG}
+          ls -la $RELEASE_PATH
+          tar -tzf $RELEASE_PKG
       - name: Release
         uses: docker://antonyurchenko/git-release:v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: ${RELEASE_PKG}
+          args: $RELEASE_PKG
