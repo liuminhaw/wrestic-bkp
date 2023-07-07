@@ -14,11 +14,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          path: checkout-dest
       - name: Pack
         run: |
           echo "Pack files"
           mkdir -p ${RELEASE_PATH}
-          cp * ${RELEASE_PATH}
+          cp -r checkout-dest/* ${RELEASE_PATH}
           tar -czf ${RELEASE_PKG} ${RELEASE_PATH}
       - name: Release
         uses: docker://antonyurchenko/git-release:v5
