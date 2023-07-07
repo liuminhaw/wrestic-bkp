@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  push:
+    tags:
+    - "v[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  pack_and_release:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_PATH: restic-bkp_${GITHUB_REF_NAME}
+      RELEASE_PKG: restic-bkp_${GITHUB_REF_NAME}.tar.gz
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Pack
+        run: |
+          echo "Pack files"
+          mkdir -p ${RELEASE_PATH}
+          cp * ${RELEASE_PATH}
+          tar -czf ${RELEASE_PKG} ${RELEASE_PATH}
+      - name: Release
+        uses: docker://antonyurchenko/git-release:v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: ${RELEASE_PKG}
