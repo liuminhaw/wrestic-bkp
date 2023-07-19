@@ -4,7 +4,7 @@
 
 
 # Global variables
-declare -r _VERSION=0.1.2
+declare -r _VERSION=0.2.0
 
 declare -r _SCRIPT=$(readlink -f "${0}")
 declare -r _SCRIPT_DIR=$(dirname ${_SCRIPT})
@@ -193,7 +193,7 @@ read_local() {
     local _block_len=$(jq length <<< ${_block})
 
     for (( i=0; i<${_block_len}; i++ )); do
-        local _src=$(jq -r --arg i "${i}" '.local[$i|tonumber].src' ${_config})
+        local _src=$(jq -r --arg i "${i}" '.local[$i|tonumber].src[]' ${_config})
         local _dest=$(jq -r --arg i "${i}" '.local[$i|tonumber].dest' ${_config})
         _DEST_REPOS[${i}]="${_dest}"
         _SRC_REPOS[${i}]="${_src}"
@@ -222,7 +222,7 @@ read_sftp() {
 
     for (( i=0; i<${_block_len}; i++ )); do
         local _host=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].host' ${_config})
-        local _src=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].src' ${_config})
+        local _src=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].src[]' ${_config})
         local _dest=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].dest' ${_config})
         _DEST_REPOS[${i}]="sftp:${_host}:${_dest}"
         _SRC_REPOS[${i}]="${_src}"
@@ -367,9 +367,14 @@ restic_backup() {
             _forget_options="${_forget_options} --${_policy_flag} ${_value}"
         done
     fi
+    local _src_paths
     for (( i=0; i<${#_SRC_REPOS[@]}; i++ )); do
-        echo "[INFO] Source: ${_SRC_REPOS[${i}]}, Destination: ${_DEST_REPOS[${i}]}"
-        restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} ${_SRC_REPOS[${i}]}
+        readarray -t _src_paths <<< "${_SRC_REPOS[${i}]}"
+        for (( j=0; j<${#_src_paths[@]}; j++ )); do
+            echo "[INFO] Source: ${_src_paths[${j}]}, Destination: ${_DEST_REPOS[${i}]}"
+            restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} ${_src_paths[${j}]}
+        done
+        echo "Backup clean"
         if [[ "${_forget_options}" == "" ]]; then
             restic prune -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
         else
