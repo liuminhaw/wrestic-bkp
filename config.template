@@ -4,22 +4,34 @@
 	"sftp": [
 		{
 			"host": "Host from ssh config file",
-			"src": "Syncing source path",
+			"src": [
+				"Syncing source path 1",
+				"Syncing source path 2"
+			],
 			"dest": "Syncing destination path"
 		},
 		{
 			"host": "Host from ssh config file",
-			"src": "Syncing source path",
+			"src": [
+				"Syncing source path 1",
+				"Syncing source path 2"
+			],
 			"dest": "Syncing destination path"
 		}
 	],
 	"local": [
 		{
-			"src": "Syncing source path",
+			"src": [
+				"Syncing source path 1",
+				"Syncing source path 2"
+			],
 			"dest": "Syncing destination path"
 		},
 		{
-			"src": "Syncing source path",
+			"src": [
+				"Syncing source path 1",
+				"Syncing source path 2"
+			],
 			"dest": "Syncing destination path"
 		}
 	],
