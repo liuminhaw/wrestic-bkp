@@ -374,6 +374,8 @@ restic_backup() {
             echo "[INFO] Source: ${_src_paths[${j}]}, Destination: ${_DEST_REPOS[${i}]}"
             restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} ${_src_paths[${j}]}
         done
+        echo "Backup check"
+        restic check -v -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
         echo "Backup clean"
         if [[ "${_forget_options}" == "" ]]; then
             restic prune -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
