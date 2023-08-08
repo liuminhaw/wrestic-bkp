@@ -284,15 +284,10 @@ read_s3() {
         local _aws_access_key_id=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_access_key_id' ${_config})
         local _aws_secret_access_key=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_secret_access_key' ${_config})
         local _aws_region=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_region' ${_config})
-        local _bucket=$(jq -r --arg i "${i}" '.s3[$i|tonumber].bucket' ${_config})
         local _src=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src[]' ${_config})
         local _dest=$(jq -r --arg i "${i}" '.s3[$i|tonumber].dest' ${_config})
 
-        if [[ -n ${_dest} ]]; then
-            _DEST_REPOS[${i}]="s3:s3.amazonaws.com/${_bucket}/${_dest}"
-        else
-            _DEST_REPOS[${i}]="s3:s3.amazonaws.com/${_bucket}"
-        fi
+        _DEST_REPOS[${i}]="s3:s3.amazonaws.com/${_dest}"
         _SRC_REPOS[${i}]="${_src}"
         _REPO_CREDS[${i}]="${_aws_access_key_id}:${_aws_secret_access_key}:${_aws_region}"
     done
