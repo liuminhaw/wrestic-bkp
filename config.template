@@ -35,6 +35,19 @@
 			"dest": "Syncing destination path"
 		}
 	],
+	"s3": [
+		{
+			"aws_access_key_id": "access key id credential",
+			"aws_secret_access_key": "secret access key credential",
+			"aws_region": "aws region",
+			"bucket": "s3 bucket name",
+			"src": [
+				"Syncing source path 1",
+				"Syncing source path 2"
+			],
+			"dest": "Syncing destination path"
+		}
+	],
 	"mount": {
         "mount_point_1": {
 			"type": "local",

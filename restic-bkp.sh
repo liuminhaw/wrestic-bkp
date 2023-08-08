@@ -10,7 +10,7 @@ declare -r _SCRIPT=$(readlink -f "${0}")
 declare -r _SCRIPT_DIR=$(dirname ${_SCRIPT})
 
 declare -r _VALID_ACTIONS=("backup" "init" "mount" "snapshots")
-declare -r _BACKUP_TYPES=("local" "sftp")
+declare -r _BACKUP_TYPES=("local" "sftp" "s3") 
 
 declare -r -A _FORGET_POLICY=(
     ["keep_last"]="keep-last"
@@ -28,6 +28,7 @@ declare -r -A _FORGET_POLICY=(
 
 declare -a _DEST_REPOS
 declare -a _SRC_REPOS
+declare -a _REPO_CREDS
 
 # ----------------------------------------------------------------------------
 # Show script usage
@@ -36,15 +37,15 @@ declare -a _SRC_REPOS
 # ----------------------------------------------------------------------------
 show_help() {
 cat << EOF
-Usage:  ${0##*/} [--help] [--version] [--config=CONFIG_FILE] [--type=local|sftp] backup|init|mount|snapshots
+Usage:  ${0##*/} [--help] [--version] [--config=CONFIG_FILE] [--type=local|sftp|s3] backup|init|mount|snapshots
         ${0##*/} [--help] [--version] [--config=CONFIG_FILE] mount MP
 
     --help                      Display this help message and exit
     --config=CONFIG_FILE
     --config CONFIG_FILE        Specify which configuration file to use when running the script
                                 Default config file: config.json
-    --type=[local|sftp]         
-    --type [local|sftp]         Specify backup destination type: (local, sftp)
+    --type=[local|sftp|s3]
+    --type [local|sftp|s3]         Specify backup destination type: (local, sftp)
                                 Default type: local
     --version                   Show version information
 
@@ -229,6 +230,46 @@ read_sftp() {
     done
 }
 
+
+# --------------------------------------------------------------------------------
+# Read s3 block configuration
+# Arguments:
+#   config filename / filepath
+# Globals:
+#   _DEST_REPOS
+#   _SRC_REPOS
+#   _REPO_CREDS
+# Returns:
+#   2 if function usage error
+# --------------------------------------------------------------------------------
+read_s3() {
+    if [[ "${#}" -ne 1 ]]; then
+        echo "[ERROR] Function ${FUNCNAME} usage error" >&2
+        return 2
+    fi
+
+    local _config=${1}
+    local _block=$(jq -r .s3 ${_config})
+    local _block_len=$(jq length <<< ${_block})
+
+    for (( i=0; i<${_block_len}; i++ )); do
+        local _aws_access_key_id=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_access_key_id' ${_config})
+        local _aws_secret_access_key=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_secret_access_key' ${_config})
+        local _aws_region=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_region' ${_config})
+        local _bucket=$(jq -r --arg i "${i}" '.s3[$i|tonumber].bucket' ${_config})
+        local _src=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src[]' ${_config})
+        local _dest=$(jq -r --arg i "${i}" '.s3[$i|tonumber].dest' ${_config})
+
+        if [[ -n ${_dest} ]]; then
+            _DEST_REPOS[${i}]="s3:s3.amazonaws.com/${_bucket}/${_dest}"
+        else
+            _DEST_REPOS[${i}]="s3:s3.amazonaws.com/${_bucket}"
+        fi
+        _SRC_REPOS[${i}]="${_src}"
+        _REPO_CREDS[${i}]="${_aws_access_key_id}:${_aws_secret_access_key}:${_aws_region}"
+    done
+}
+
 # -----------------------------------------------------------------------------
 # Get backup usage conifuration setting according to given type of destination
 # (local, sftp)
@@ -256,8 +297,66 @@ summarize_backup_config() {
             read_sftp ${_config}
             (( ${?} == 0 )) || return 1
         ;;
+        s3)
+            read_s3 ${_config}
+            (( ${?} == 0 )) || return 1
+        ;;
         *)
             return 1
+    esac
+}
+
+# ------------------------------------------------------------------------------
+# Init aws credentials
+# Arguments:
+#   aws credentials in format accessKeyId:secretAccessKey:region, string
+# Globals:
+#   AWS_ACCESS_KEY_ID
+#   AWS_SECRET_ACCESS_KEY
+#   AWS_DEFAULT_REGION
+# Returns:
+#   non-zero on error
+# ------------------------------------------------------------------------------
+aws_init() {
+    if [[ "${#}" -ne 1 ]]; then
+        echo "[ERROR] Function ${FUNCNAME} usage error" >&2
+        return 2
+    fi
+
+    local _aws_creds=${1}
+    local _aws_access_key_id=$(cut -d: -f1 <<< ${_aws_creds})
+    local _aws_secret_access_key=$(cut -d: -f2 <<< ${_aws_creds})
+    local _aws_region=$(cut -d: -f3 <<< ${_aws_creds})
+
+    export AWS_ACCESS_KEY_ID=${_aws_access_key_id}
+    export AWS_SECRET_ACCESS_KEY=${_aws_secret_access_key}
+    export AWS_DEFAULT_REGION=${_aws_region}
+}
+
+
+# ------------------------------------------------------------------------------
+# Init permissiong for restic repository if needed for type of destination
+# Arguments:
+#   backup type
+#   type required credential
+#     s3 format: accessKeyId:secretAccessKey:region
+# Returns:
+#   non-zero on error
+# ------------------------------------------------------------------------------
+repo_permission_init() {
+    if [[ "${#}" -ne 2 ]]; then
+        echo "[ERROR] Function ${FUNCNAME} usage error" >&2
+        return 2
+    fi
+
+    local _type=${1}
+    local _cred=${2}
+
+    case ${_type} in
+        s3)
+            aws_init ${_cred}
+            (( ${?} == 0 )) || return 1
+        ;;
     esac
 }
 
@@ -286,6 +385,7 @@ restic_init() {
     (( ${?} == 0 )) || return 1
 
     for (( i=0; i<${#_DEST_REPOS[@]}; i++ )); do
+        repo_permission_init ${_type} "${_REPO_CREDS[${i}]}"
         echo "[INFO] Destination: ${_DEST_REPOS[${i}]}"
         restic init -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
         echo ""
@@ -317,6 +417,8 @@ restic_snapshots() {
     (( ${?} == 0 )) || return 1
 
     for (( i=0; i<${#_DEST_REPOS[@]}; i++ )); do
+        repo_permission_init ${_type} "${_REPO_CREDS[${i}]}"
+        (( ${?} == 0 )) || return 1
         echo "[INFO] Destination: ${_DEST_REPOS[${i}]}"
         restic snapshots -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
         echo ""
@@ -369,6 +471,8 @@ restic_backup() {
     fi
     local _src_paths
     for (( i=0; i<${#_SRC_REPOS[@]}; i++ )); do
+        repo_permission_init ${_type} "${_REPO_CREDS[${i}]}"
+        (( ${?} == 0 )) || return 1
         readarray -t _src_paths <<< "${_SRC_REPOS[${i}]}"
         for (( j=0; j<${#_src_paths[@]}; j++ )); do
             echo "[INFO] Source: ${_src_paths[${j}]}, Destination: ${_DEST_REPOS[${i}]}"
