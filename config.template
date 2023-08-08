@@ -1,70 +1,78 @@
 {
-	"password_file": ".restic.pass",
-	"exclude_file": "excludes.txt",
-	"sftp": [
-		{
-			"host": "Host from ssh config file",
-			"src": [
-				"Syncing source path 1",
-				"Syncing source path 2"
-			],
-			"dest": "Syncing destination path"
-		},
-		{
-			"host": "Host from ssh config file",
-			"src": [
-				"Syncing source path 1",
-				"Syncing source path 2"
-			],
-			"dest": "Syncing destination path"
-		}
-	],
-	"local": [
-		{
-			"src": [
-				"Syncing source path 1",
-				"Syncing source path 2"
-			],
-			"dest": "Syncing destination path"
-		},
-		{
-			"src": [
-				"Syncing source path 1",
-				"Syncing source path 2"
-			],
-			"dest": "Syncing destination path"
-		}
-	],
-	"s3": [
-		{
-			"aws_access_key_id": "access key id credential",
-			"aws_secret_access_key": "secret access key credential",
-			"aws_region": "aws region",
-			"bucket": "s3 bucket name",
-			"src": [
-				"Syncing source path 1",
-				"Syncing source path 2"
-			],
-			"dest": "Syncing destination path"
-		}
-	],
-	"mount": {
+    "password_file": ".restic.pass",
+    "exclude_file": "excludes.txt",
+    "sftp": [
+        {
+            "host": "Host from ssh config file",
+            "src": [
+                "Syncing source path 1",
+                "Syncing source path 2"
+            ],
+            "dest": "Syncing destination path"
+        },
+        {
+            "host": "Host from ssh config file",
+            "src": [
+                "Syncing source path 1",
+                "Syncing source path 2"
+            ],
+            "dest": "Syncing destination path"
+        }
+    ],
+    "local": [
+        {
+            "src": [
+                "Syncing source path 1",
+                "Syncing source path 2"
+            ],
+            "dest": "Syncing destination path"
+        },
+        {
+            "src": [
+                "Syncing source path 1",
+                "Syncing source path 2"
+            ],
+            "dest": "Syncing destination path"
+        }
+    ],
+    "s3": [
+        {
+            "aws_access_key_id": "access key id credential",
+            "aws_secret_access_key": "secret access key credential",
+            "aws_region": "aws region",
+            "bucket": "s3 bucket name",
+            "src": [
+                "Syncing source path 1",
+                "Syncing source path 2"
+            ],
+            "dest": "Syncing destination path"
+        }
+    ],
+    "mount": {
         "mount_point_1": {
-			"type": "local",
+            "type": "local",
             "src": "restic backup location",
             "dest": "Local mount point destination"
         },
         "mount_point_2": {
-			"type": "sftp",
-			"host": "Host from ssh config file",
+            "type": "sftp",
+            "host": "Host from ssh config file",
             "src": "restic backup location",
             "dest": "Local mount point desitnation"
+        },
+        "mount_point_3": {
+            "type": "s3",
+            "aws_access_key_id": "access key id credential",
+            "aws_secret_access_key": "secret access key credential",
+            "aws_region": "aws region",
+            "src": "restic backup location (bucket/path/to/backup)",
+            "dest": "Local mount point destination"
         }
     },
-	"snapshots_policy": {
-		"keep_daily": 7,
-		"keep_weekly": 5,
-		"keep_monthly": 12,
-		"keep_yearly": 3
-	}
+    "snapshots_policy": {
+        "keep_daily": 7,
+        "keep_weekly": 5,
+        "keep_monthly": 12,
+        "keep_yearly": 3
+    }
 }
