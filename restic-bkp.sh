@@ -112,6 +112,7 @@ check_config_required_file() {
 # Globals:
 #   _DEST_REPOS
 #   _SRC_REPOS
+#   _REPO_CREDS
 # Outputs:
 #   Write error messages to stderr
 # Returns:
@@ -133,16 +134,36 @@ read_mount_point() {
     fi
 
     local _type=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].type' ${_config})
-    if [[ "${_type}" != "local" && "${_type}" != "sftp" ]]; then
+    if [[ ! " ${_BACKUP_TYPES[*]} " =~ " ${_type} "  ]]; then
         echo "[ERROR] .mount.${_mount_point}.type value not set or invalid" >&2
         return 1
     fi
 
-    local _host=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].host' ${_config})
-    if [[ "${_type}" == "sftp" && "${_host}" == "null" ]]; then
-        echo "[ERROR] .mount.${_mount_point}.host value not set with type ${_type}" >&2
-        return 1
-    fi
+    case ${_type} in
+        sftp)
+            local _host=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].host' ${_config})
+            if [[ "${_host}" == "null" ]]; then
+                echo "[ERROR] .mount.${_mount_point}.host value not set with type ${_type}" >&2
+                return 1
+            fi
+        ;;
+        s3)
+            local _aws_access_key_id=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].aws_access_key_id' ${_config})
+            local _aws_secret_access_key=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].aws_secret_access_key' ${_config})
+            local _aws_region=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].aws_region' ${_config})
+            if [[ "${_aws_access_key_id}" == "null" ]]; then
+                echo "[ERROR] .mount.${_mount_point}.aws_access_key_id value not set with type ${_type}" >&2
+                return 1
+            fi
+            if [[ "${_aws_secret_access_key}" == "null" ]]; then
+                echo "[ERROR] .mount.${_mount_point}.aws_secret_access_key value not set with type ${_type}" >&2
+                return 1
+            fi
+            if [[ "${_aws_region}" == "null" ]]; then
+                echo "[ERROR] .mount.${_mount_point}.aws_region value not set with type ${_type}" >&2
+                return 1
+            fi
+    esac
 
     local _src=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].src' ${_config})
     if [[ "${_src}" == "null" ]]; then 
@@ -167,10 +188,17 @@ read_mount_point() {
         sftp)
             _SRC_REPOS[0]="sftp:${_host}:${_src}"
         ;;
+        s3)
+            _SRC_REPOS[0]="s3:s3.amazonaws.com/${_src}"
+            _REPO_CREDS[0]="${_aws_access_key_id}:${_aws_secret_access_key}:${_aws_region}"
+        ;;
         *)
             echo "[ERROR] invalid type value: ${_type}"
             return 1
     esac
+
+    repo_permission_init ${_type} "${_REPO_CREDS[0]}"
+    (( ${?} == 0 )) || return 1
 }
 
 # -------------------------------------------------------------------------------
@@ -386,6 +414,7 @@ restic_init() {
 
     for (( i=0; i<${#_DEST_REPOS[@]}; i++ )); do
         repo_permission_init ${_type} "${_REPO_CREDS[${i}]}"
+        (( ${?} == 0 )) || return 1
         echo "[INFO] Destination: ${_DEST_REPOS[${i}]}"
         restic init -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
         echo ""
