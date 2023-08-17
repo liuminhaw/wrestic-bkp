@@ -49,17 +49,20 @@
     ],
     "mount": {
         "mount_point_1": {
+            "default_password": false,
             "type": "local",
             "src": "restic backup location",
             "dest": "Local mount point destination"
         },
         "mount_point_2": {
+            "default_password": false,
             "type": "sftp",
             "host": "Host from ssh config file",
             "src": "restic backup location",
             "dest": "Local mount point desitnation"
         },
         "mount_point_3": {
+            "default_password": false,
             "type": "s3",
             "aws_access_key_id": "access key id credential",
             "aws_secret_access_key": "secret access key credential",
