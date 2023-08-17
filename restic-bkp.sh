@@ -523,18 +523,24 @@ restic_backup() {
 #   non-zero on error
 # ---------------------------------------------------------------------------
 restic_mount() {
-    if [[ "${#}" -ne 2 ]]; then
+    if [[ "${#}" -ne 3 ]]; then
         echo "[ERROR] Function ${FUNCNAME} usage error" >&2
         return 2
     fi
 
     local _config=${1}
     local _mount_point=${2}
+    local _password_file=${3}
 
     read_mount_point ${_config} ${_mount_point}
     (( ${?} == 0 )) || return 1
 
-    restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]}
+    _use_default_password=$(jq --arg mp "${_mount_point}" '.mount[$mp].default_password' ${_config})
+    if [[ "${_use_default_password}" == "true" ]]; then
+        restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]} --password-file ${_password_file}
+    else
+        restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]}
+    fi
 }
 
 main() {
@@ -642,7 +648,7 @@ main() {
             (( ${?} == 0 )) || exit 1
         ;;
         mount)
-            restic_mount ${_config} ${_mount_point}
+            restic_mount ${_config} ${_mount_point} ${_password_file}
             (( ${?} == 0 )) || exit 1
         ;;
         snapshots)
