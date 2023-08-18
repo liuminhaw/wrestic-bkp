@@ -49,26 +49,30 @@
     ],
     "mount": {
         "mount_point_1": {
-            "default_password": false,
+            "default_password": false, // (Optional, default to false)
             "type": "local",
             "src": "restic backup location",
             "dest": "Local mount point destination"
         },
         "mount_point_2": {
-            "default_password": false,
+            "default_password": false, // (Optional, default to false)
             "type": "sftp",
             "host": "Host from ssh config file",
             "src": "restic backup location",
             "dest": "Local mount point desitnation"
         },
         "mount_point_3": {
-            "default_password": false,
+            "default_password": false, // (Optional, default to false)
             "type": "s3",
             "aws_access_key_id": "access key id credential",
             "aws_secret_access_key": "secret access key credential",
             "aws_region": "aws region",
             "src": "restic backup location (bucket/path/to/backup)",
-            "dest": "Local mount point destination"
+            "dest": "Local mount point destination",
+            "paths": [  // (Optional, default to show all snapshots)
+                "path/to/mount/1",
+                "path/to/mount/2"
+            ]
         }
     },
     "snapshots_policy": {

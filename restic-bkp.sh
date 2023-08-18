@@ -293,6 +293,40 @@ read_s3() {
     done
 }
 
+# --------------------------------------------------------------------------------
+# Set mount options reading from config file
+# Arguments:
+#   config filename / filepath
+#   restic password filepath
+# Outputs:
+#   write mount options to stdout on success
+# --------------------------------------------------------------------------------
+read_mount_options() {
+    if [[ "${#}" -ne 2 ]]; then
+        echo "[ERROR] Function ${FUNCNAME[0]} usage error" >&2
+        return 2
+    fi
+
+    local _config=${1}
+    local _password_file=${2}
+    local _options
+
+    local _use_default_password=$(jq -r --arg mp "${_mount_point}" '.mount[$mp].default_password' ${_config})
+    if [[ "${_use_default_password}" == "true" ]]; then
+        _options+="--password-file ${_password_file} "
+    fi
+
+    local _paths
+    _paths=($(jq -r --arg mp "${_mount_point}" '.mount[$mp].paths[]' ${_config})) &> /dev/null
+    if [[ ${?} -eq 0 ]]; then
+        for _path in ${_paths[@]}; do
+            _options+="--path ${_path} "
+        done
+    fi
+
+    echo "${_options}"
+}
+
 # -----------------------------------------------------------------------------
 # Get backup usage conifuration setting according to given type of destination
 # (local, sftp)
@@ -519,6 +553,7 @@ restic_backup() {
 # Arguments:
 #   config filename / filepath
 #   key name of mount point in configuration
+#   restic password filepath
 # Returns:
 #   non-zero on error
 # ---------------------------------------------------------------------------
@@ -535,12 +570,13 @@ restic_mount() {
     read_mount_point ${_config} ${_mount_point}
     (( ${?} == 0 )) || return 1
 
-    _use_default_password=$(jq --arg mp "${_mount_point}" '.mount[$mp].default_password' ${_config})
-    if [[ "${_use_default_password}" == "true" ]]; then
-        restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]} --password-file ${_password_file}
-    else
-        restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]}
-    fi
+    local _options
+    _options=$(read_mount_options ${_config} ${_password_file})
+    (( ${?} == 0 )) || return 1
+
+    # echo "[DEBUG] Mount options: ${_options}"
+    # echo "[DEBUG] restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]} ${_options}"
+    restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]} ${_options}
 }
 
 main() {
