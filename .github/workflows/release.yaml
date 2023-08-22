@@ -9,8 +9,8 @@ jobs:
   pack_and_release:
     runs-on: ubuntu-latest
     env:
-      RELEASE_PATH: restic-bkp_${{ github.ref_name }}
-      RELEASE_PKG: restic-bkp_${{ github.ref_name }}.tar.gz
+      RELEASE_PATH: wrestic-bkp_${{ github.ref_name }}
+      RELEASE_PKG: wrestic-bkp_${{ github.ref_name }}.tar.gz
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -20,7 +20,7 @@ jobs:
         run: |
           echo "Pack files"
           mkdir -p $RELEASE_PATH
-          cp -r checkout-dest/* $RELEASE_PATH
+          cp -r checkout-dest/* checkout-dest/.restic.pass $RELEASE_PATH
           tar -czf $RELEASE_PKG $RELEASE_PATH
           cp checkout-dest/CHANGELOG.md .
       - name: Check
