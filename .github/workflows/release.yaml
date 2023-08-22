@@ -33,4 +33,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: restic-bkp_${{ github.ref_name }}.tar.gz
+          args: wrestic-bkp_${{ github.ref_name }}.tar.gz
