@@ -37,7 +37,7 @@ declare -a _REPO_CREDS
 # ----------------------------------------------------------------------------
 show_help() {
 cat << EOF
-Usage:  ${0##*/} [--help] [--version] [--config=CONFIG_FILE] [--type=local|sftp|s3] backup|init|mount|snapshots
+Usage:  ${0##*/} [--help] [--version] [--config=CONFIG_FILE] [--type=local|sftp|s3] backup|init|snapshots
         ${0##*/} [--help] [--version] [--config=CONFIG_FILE] mount MP
 
     --help                      Display this help message and exit
@@ -45,7 +45,7 @@ Usage:  ${0##*/} [--help] [--version] [--config=CONFIG_FILE] [--type=local|sftp|
     --config CONFIG_FILE        Specify which configuration file to use when running the script
                                 Default config file: config.json
     --type=[local|sftp|s3]
-    --type [local|sftp|s3]         Specify backup destination type: (local, sftp)
+    --type [local|sftp|s3]      Specify backup destination type: (local, sftp)
                                 Default type: local
     --version                   Show version information
 
