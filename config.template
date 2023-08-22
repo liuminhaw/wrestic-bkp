@@ -52,14 +52,22 @@
             "default_password": false, // (Optional, default to false)
             "type": "local",
             "src": "restic backup location",
-            "dest": "Local mount point destination"
+            "dest": "Local mount point destination",
+            "paths": [  // (Optional, default to show all snapshots)
+                "path/to/mount/1",
+                "path/to/mount/2"
+            ]
         },
         "mount_point_2": {
             "default_password": false, // (Optional, default to false)
             "type": "sftp",
             "host": "Host from ssh config file",
             "src": "restic backup location",
-            "dest": "Local mount point desitnation"
+            "dest": "Local mount point desitnation",
+            "paths": [  // (Optional, default to show all snapshots)
+                "path/to/mount/1",
+                "path/to/mount/2"
+            ]
         },
         "mount_point_3": {
             "default_password": false, // (Optional, default to false)

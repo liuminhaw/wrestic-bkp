@@ -14,6 +14,10 @@
 - Add `paths` config to mount point setting ([#32](https://github.com/liuminhaw/wrestic-bkp/pull/32))
 - Perform `restic check` after each backup is finished ([#28](https://github.com/liuminhaw/wrestic-bkp/pull/28))
 
+### Fixed
+
+- Fix script helper message format ([#36](https://github.com/liuminhaw/wrestic-bkp/pull/36))
+
 
 ## [0.1.2] - 2023-07-08
 
