@@ -317,7 +317,7 @@ read_mount_options() {
     fi
 
     local _paths
-    _paths=($(jq -r --arg mp "${_mount_point}" '.mount[$mp].paths[]' ${_config})) &> /dev/null
+    _paths=($(jq -r --arg mp "${_mount_point}" '.mount[$mp].paths[]' ${_config} 2> /dev/null))
     if [[ ${?} -eq 0 ]]; then
         for _path in ${_paths[@]}; do
             _options+="--path ${_path} "
