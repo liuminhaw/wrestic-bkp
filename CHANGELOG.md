@@ -1,9 +1,16 @@
 # Changelog
 
+## [0.2.2] - 2023-10-08
+
+### Fixed
+
+- Fix mismatched version information ([#45](https://github.com/liuminhaw/wrestic-bkp/pull/45))
+
 ## [0.2.1] - 2023-09-05
 
 ### Fixed
-- Fix error message when using mount action mount point with no paths setup([#40](https://github.com/liuminhaw/wrestic-bkp/pull/40)) 
+
+- Fix error message when using mount action mount point with no paths setup ([#40](https://github.com/liuminhaw/wrestic-bkp/pull/40))
 
 ## [0.2.0] - 2023-08-22
 
@@ -51,6 +58,8 @@
 ## [0.1.0] - 2022-02-07
 
 _:seedling: Initial release._
+
+[0.2.2]: https://github.com/liuminhaw/wrestic-bkp/releases/tag/v0.2.2
 
 [0.2.1]: https://github.com/liuminhaw/wrestic-bkp/releases/tag/v0.2.1
 
