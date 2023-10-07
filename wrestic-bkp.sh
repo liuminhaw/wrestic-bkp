@@ -4,7 +4,7 @@
 
 
 # Global variables
-declare -r _VERSION=0.2.0
+declare -r _VERSION=0.2.2
 
 declare -r _SCRIPT=$(readlink -f "${0}")
 declare -r _SCRIPT_DIR=$(dirname ${_SCRIPT})
