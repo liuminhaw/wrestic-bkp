@@ -1,0 +1,83 @@
+{
+  "password_file": ".restic.pass",
+  "exclude_file": "excludes.txt",
+  "sftp": [
+    {
+      "host": "Host from ssh config file",
+      "src": ["Syncing source path 1", "Syncing source path 2"],
+      "dest": "Syncing destination path",
+      "src_in_one": false // Set to backup listed src path in single snapshot, optional
+    },
+    {
+      "host": "Host from ssh config file",
+      "src": ["Syncing source path 1", "Syncing source path 2"],
+      "dest": "Syncing destination path"
+    }
+  ],
+  "local": [
+    {
+      "src": ["Syncing source path 1", "Syncing source path 2"],
+      "dest": "Syncing destination path",
+      "src_in_one": true // Set to backup listed src path in single snapshot, optional
+    },
+    {
+      "src": ["Syncing source path 1", "Syncing source path 2"],
+      "dest": "Syncing destination path"
+    }
+  ],
+  "s3": [
+    {
+      "aws_access_key_id": "access key id credential",
+      "aws_secret_access_key": "secret access key credential",
+      "aws_region": "aws region",
+      "src": ["Syncing source path 1", "Syncing source path 2"],
+      "dest": "Syncing destination path (bucket/path/to/backup)",
+      "src_in_one": false // Set to backup listed src path in single snapshot, optional
+    }
+  ],
+  "mount": {
+    "mount_point_1": {
+      "default_password": false, // Set to use password_file as decrypt password, optional
+      "type": "local",
+      "src": "restic backup location",
+      "dest": "Local mount point destination",
+      "paths": [
+        // (Optional, default to show all snapshots)
+        "path/to/mount/1",
+        "path/to/mount/2"
+      ]
+    },
+    "mount_point_2": {
+      "default_password": false, // Set to use password_file as decrypt password, optional
+      "type": "sftp",
+      "host": "Host from ssh config file",
+      "src": "restic backup location",
+      "dest": "Local mount point desitnation",
+      "paths": [
+        // (Optional, default to show all snapshots)
+        "path/to/mount/1",
+        "path/to/mount/2"
+      ]
+    },
+    "mount_point_3": {
+      "default_password": false, // Set to use password_file as decrypt password, optional
+      "type": "s3",
+      "aws_access_key_id": "access key id credential",
+      "aws_secret_access_key": "secret access key credential",
+      "aws_region": "aws region",
+      "src": "restic backup location (bucket/path/to/backup)",
+      "dest": "Local mount point destination",
+      "paths": [
+        // (Optional, default to show all snapshots)
+        "path/to/mount/1",
+        "path/to/mount/2"
+      ]
+    }
+  },
+  "snapshots_policy": {
+    "keep_daily": 7,
+    "keep_weekly": 5,
+    "keep_monthly": 12,
+    "keep_yearly": 3
+  }
+}
