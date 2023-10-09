@@ -4,7 +4,7 @@
 
 
 # Global variables
-declare -r _VERSION=0.2.2
+declare -r _VERSION=0.3.0
 
 declare -r _SCRIPT=$(readlink -f "${0}")
 declare -r _SCRIPT_DIR=$(dirname ${_SCRIPT})
@@ -26,6 +26,7 @@ declare -r -A _FORGET_POLICY=(
     ["keep_within_yearly"]="keep-within-yearly"
 )
 
+declare -a _SRC_IN_ONE
 declare -a _DEST_REPOS
 declare -a _SRC_REPOS
 declare -a _REPO_CREDS
@@ -224,8 +225,10 @@ read_local() {
     for (( i=0; i<${_block_len}; i++ )); do
         local _src=$(jq -r --arg i "${i}" '.local[$i|tonumber].src[]' ${_config})
         local _dest=$(jq -r --arg i "${i}" '.local[$i|tonumber].dest' ${_config})
+        local _src_in_one=$(jq -r --arg i "${i}" '.local[$i|tonumber].src_in_one' ${_config})
         _DEST_REPOS[${i}]="${_dest}"
         _SRC_REPOS[${i}]="${_src}"
+        _SRC_IN_ONE[${i}]="${_src_in_one}"
     done
 }
 
@@ -253,8 +256,10 @@ read_sftp() {
         local _host=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].host' ${_config})
         local _src=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].src[]' ${_config})
         local _dest=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].dest' ${_config})
+        local _src_in_one=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].src_in_one' ${_config})
         _DEST_REPOS[${i}]="sftp:${_host}:${_dest}"
         _SRC_REPOS[${i}]="${_src}"
+        _SRC_IN_ONE[${i}]="${_src_in_one}"
     done
 }
 
@@ -286,9 +291,11 @@ read_s3() {
         local _aws_region=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_region' ${_config})
         local _src=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src[]' ${_config})
         local _dest=$(jq -r --arg i "${i}" '.s3[$i|tonumber].dest' ${_config})
+        local _src_in_one=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src_in_one' ${_config})
 
         _DEST_REPOS[${i}]="s3:s3.amazonaws.com/${_dest}"
         _SRC_REPOS[${i}]="${_src}"
+        _SRC_IN_ONE[${i}]="${_src_in_one}"
         _REPO_CREDS[${i}]="${_aws_access_key_id}:${_aws_secret_access_key}:${_aws_region}"
     done
 }
@@ -328,7 +335,7 @@ read_mount_options() {
 }
 
 # -----------------------------------------------------------------------------
-# Get backup usage conifuration setting according to given type of destination
+# Get backup usage configuration setting according to given type of destination
 # (local, sftp)
 # Arguments:
 #   backup type, string
@@ -446,6 +453,7 @@ restic_init() {
         (( ${?} == 0 )) || return 1
         echo "[INFO] Destination: ${_DEST_REPOS[${i}]}"
         restic init -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
+        (( ${?} == 0 )) || return 1
         echo ""
     done
 }
@@ -479,6 +487,7 @@ restic_snapshots() {
         (( ${?} == 0 )) || return 1
         echo "[INFO] Destination: ${_DEST_REPOS[${i}]}"
         restic snapshots -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
+        (( ${?} == 0 )) || return 1
         echo ""
     done
 }
@@ -532,17 +541,26 @@ restic_backup() {
         repo_permission_init ${_type} "${_REPO_CREDS[${i}]}"
         (( ${?} == 0 )) || return 1
         readarray -t _src_paths <<< "${_SRC_REPOS[${i}]}"
-        for (( j=0; j<${#_src_paths[@]}; j++ )); do
-            echo "[INFO] Source: ${_src_paths[${j}]}, Destination: ${_DEST_REPOS[${i}]}"
-            restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} ${_src_paths[${j}]}
-        done
+        if [[ "${_SRC_IN_ONE[${i}]}" == "true" ]]; then
+            echo "[INFO] Source: ${_src_paths[@]}, Destination: ${_DEST_REPOS[${i}]}"
+            restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} ${_src_paths[@]}  
+            (( ${?} == 0 )) || return 1
+        else
+            for (( j=0; j<${#_src_paths[@]}; j++ )); do
+                echo "[INFO] Source: ${_src_paths[${j}]}, Destination: ${_DEST_REPOS[${i}]}"
+                restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} ${_src_paths[${j}]}
+                (( ${?} == 0 )) || return 1
+            done
+        fi
         echo "Backup check"
         restic check -v -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
         echo "Backup clean"
         if [[ "${_forget_options}" == "" ]]; then
             restic prune -r ${_DEST_REPOS[${i}]} --password-file ${_password_file}
+            (( ${?} == 0 )) || return 1
         else
             restic forget -v -r ${_DEST_REPOS[${i}]} --password-file ${_password_file} ${_forget_options} --prune
+            (( ${?} == 0 )) || return 1
         fi
         echo ""
     done
@@ -577,6 +595,7 @@ restic_mount() {
     # echo "[DEBUG] Mount options: ${_options}"
     # echo "[DEBUG] restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]} ${_options}"
     restic -r ${_SRC_REPOS[0]} mount ${_DEST_REPOS[0]} ${_options}
+    (( ${?} == 0 )) || return 1
 }
 
 main() {
