@@ -48,21 +48,22 @@ Configuration file can be copied and edit from `config.template`
 #### Password
 The `password_file` key in config file (default: .restic.pass)<br>
 Password is needed when restic process
-```
+```text
 defaultPasswordToEncryptResticSnapshot
 ```
 
 #### Exclusion
 The `exclude_file` key in config file (default: excludes.txt)<br>
 Create the file with listed files and directories for exclusion
-```
+
+```text
 List
 excluded 
 files
 and
 diretories
 here
-``` 
+```
 
 #### Type
 Supported type making restic backup
@@ -73,6 +74,7 @@ At local directory of disk. Local is the default backup type if no `--type` opti
 Local configuration block is consisted of an array with pairs of `src` and `dest` set.
 - source: Backup source paths, list of paths to backup
 - destination: Backup destination path
+- src_in_one: Set `true` to backup listed source paths in single snapshot (Optional, default: `false`)
 
 ```json
 "local": [
@@ -81,7 +83,8 @@ Local configuration block is consisted of an array with pairs of `src` and `dest
             "Syncing source path 1",
             "Syncing source path 2"
         ],
-        "dest": "Syncing destination path"
+        "dest": "Syncing destination path",
+        "src_in_one": true
     },
     {
         "src": [
@@ -100,6 +103,7 @@ SFTP configuration block is consisted of an array with pairs of `host`, `src`, a
 - source: Backup source paths, list of paths to backup
 - destination: Backup destination path
 - host (`sftp` type only): host name set in ssh config file 
+- src_in_one: Set `true` to backup listed source paths in single snapshot (Optional, default: `false`)
 
 ```json
 "sftp": [
@@ -109,7 +113,8 @@ SFTP configuration block is consisted of an array with pairs of `host`, `src`, a
             "Syncing source path 1",
             "Syncing source path 2"
         ],
-        "dest": "Syncing destination path"
+        "dest": "Syncing destination path",
+        "src_in_one": true
     },
     {
         "host": "Host from ssh config file",
@@ -123,7 +128,7 @@ SFTP configuration block is consisted of an array with pairs of `host`, `src`, a
 
 ```
 ssh config file format
-```
+```text
 Host HOST_NAME
     Hostname HOST_ADDRESS/DOMAIN
     User USERNAME
@@ -151,6 +156,7 @@ s3 configuration block is consisted of an array with pairs of `aws_access_key_id
     Allow Actions: ListBucket, GetBucketLocation
     Resource: arn:aws:s3:::restic-demo
     ```
+- src_in_one: Set `true` to backup listed source paths in single snapshot (Optional, default: `false`)
 
 ```json
 "s3": [
@@ -162,7 +168,8 @@ s3 configuration block is consisted of an array with pairs of `aws_access_key_id
             "Syncing source path 1",
             "Syncing source path 2"
         ],
-        "dest": "Syncing destination path (bucket/path/to/backup)"
+        "dest": "Syncing destination path (bucket/path/to/backup)",
+        "src_in_one": true
     }
 ]
 ```
@@ -180,7 +187,11 @@ Snapshot is backup on local directory or disk
 "mount_point_name": {
     "type": "local",
     "src": "restic backup location",
-    "dest": "Local mount point destination"
+    "dest": "Local mount point destination",
+    "paths": [
+        "/snapshot/matched/path",
+        "/other/snapshot/matched/path"
+    ]
 }
 ```
 - type: Specified `local` type is used
@@ -247,7 +258,4 @@ For more policy explanation, please checkout restic's [document page](https://re
     "keep_yearly": 3
 }
 ```
-
-
-
 
