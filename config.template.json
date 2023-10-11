@@ -27,6 +27,7 @@
   ],
   "s3": [
     {
+      "aws_profile_name": "aws profile name (alternative to aws keys setting)",
       "aws_access_key_id": "access key id credential",
       "aws_secret_access_key": "secret access key credential",
       "aws_region": "aws region",

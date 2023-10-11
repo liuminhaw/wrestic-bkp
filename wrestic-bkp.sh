@@ -277,26 +277,41 @@ read_sftp() {
 # --------------------------------------------------------------------------------
 read_s3() {
     if [[ "${#}" -ne 1 ]]; then
-        echo "[ERROR] Function ${FUNCNAME} usage error" >&2
+        echo "[ERROR] Function ${FUNCNAME[0]} usage error" >&2
         return 2
     fi
 
     local _config=${1}
-    local _block=$(jq -r .s3 ${_config})
-    local _block_len=$(jq length <<< ${_block})
+    local _block
+    local _block_len
 
-    for (( i=0; i<${_block_len}; i++ )); do
-        local _aws_access_key_id=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_access_key_id' ${_config})
-        local _aws_secret_access_key=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_secret_access_key' ${_config})
-        local _aws_region=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_region' ${_config})
-        local _src=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src[]' ${_config})
-        local _dest=$(jq -r --arg i "${i}" '.s3[$i|tonumber].dest' ${_config})
-        local _src_in_one=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src_in_one' ${_config})
+    _block=$(jq -r .s3 "${_config}")
+    _block_len=$(jq length <<< "${_block}")
+
+    local _aws_profile
+    local _aws_access_key_id
+    local _aws_secret_access_key
+    local _aws_region
+    local _src
+    local _dest
+    local _src_in_one
+    for (( i=0; i<_block_len; i++ )); do
+        _aws_profile=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_profile_name' "${_config}")
+        _aws_access_key_id=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_access_key_id' "${_config}")
+        _aws_secret_access_key=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_secret_access_key' "${_config}")
+        _aws_region=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_region' "${_config}")
+        _src=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src[]' "${_config}")
+        _dest=$(jq -r --arg i "${i}" '.s3[$i|tonumber].dest' "${_config}")
+        _src_in_one=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src_in_one' "${_config}")
 
         _DEST_REPOS[${i}]="s3:s3.amazonaws.com/${_dest}"
         _SRC_REPOS[${i}]="${_src}"
         _SRC_IN_ONE[${i}]="${_src_in_one}"
-        _REPO_CREDS[${i}]="${_aws_access_key_id}:${_aws_secret_access_key}:${_aws_region}"
+        if [[ -n ${_aws_profile} && ${_aws_profile} != "null" ]]; then 
+            _REPO_CREDS[${i}]="aws-profile:${_aws_profile}"
+        else
+            _REPO_CREDS[${i}]="aws-key:${_aws_access_key_id}:${_aws_secret_access_key}:${_aws_region}"
+        fi
     done
 }
 
@@ -326,7 +341,7 @@ read_mount_options() {
     local _paths
     _paths=($(jq -r --arg mp "${_mount_point}" '.mount[$mp].paths[]' ${_config} 2> /dev/null))
     if [[ ${?} -eq 0 ]]; then
-        for _path in ${_paths[@]}; do
+        for _path in "${_paths[@]}"; do
             _options+="--path ${_path} "
         done
     fi
@@ -383,18 +398,36 @@ summarize_backup_config() {
 # ------------------------------------------------------------------------------
 aws_init() {
     if [[ "${#}" -ne 1 ]]; then
-        echo "[ERROR] Function ${FUNCNAME} usage error" >&2
+        echo "[ERROR] Function ${FUNCNAME[0]} usage error" >&2
         return 2
     fi
 
     local _aws_creds=${1}
-    local _aws_access_key_id=$(cut -d: -f1 <<< ${_aws_creds})
-    local _aws_secret_access_key=$(cut -d: -f2 <<< ${_aws_creds})
-    local _aws_region=$(cut -d: -f3 <<< ${_aws_creds})
+    local _aws_cred_type
+    local _aws_profile
+    local _aws_access_key_id
+    local _aws_secret_access_key
+    local _aws_region
 
-    export AWS_ACCESS_KEY_ID=${_aws_access_key_id}
-    export AWS_SECRET_ACCESS_KEY=${_aws_secret_access_key}
-    export AWS_DEFAULT_REGION=${_aws_region}
+    _aws_cred_type=$(cut -d: -f1 <<< "${_aws_creds}")
+
+    case "${_aws_cred_type}" in
+    aws-profile)
+        _aws_profile=$(cut -d: -f2 <<< "${_aws_creds}")
+        export AWS_PROFILE=${_aws_profile}
+    ;;
+    aws-key)
+        _aws_access_key_id=$(cut -d: -f2 <<< "${_aws_creds}")
+        _aws_secret_access_key=$(cut -d: -f3 <<< "${_aws_creds}")
+        _aws_region=$(cut -d: -f4 <<< "${_aws_creds}")
+        export AWS_ACCESS_KEY_ID=${_aws_access_key_id}
+        export AWS_SECRET_ACCESS_KEY=${_aws_secret_access_key}
+        export AWS_DEFAULT_REGION=${_aws_region}
+    ;;
+    *)
+        echo "[ERROR] Not supported cred type: ${_aws_cred_type}"
+        return 1
+    esac
 }
 
 
@@ -409,7 +442,7 @@ aws_init() {
 # ------------------------------------------------------------------------------
 repo_permission_init() {
     if [[ "${#}" -ne 2 ]]; then
-        echo "[ERROR] Function ${FUNCNAME} usage error" >&2
+        echo "[ERROR] Function ${FUNCNAME[0]} usage error" >&2
         return 2
     fi
 
@@ -418,8 +451,10 @@ repo_permission_init() {
 
     case ${_type} in
         s3)
-            aws_init ${_cred}
-            (( ${?} == 0 )) || return 1
+            if ! aws_init "${_cred}"; then
+                echo "[ERROR] repo_permission_init: aws_init failed"
+                return 1
+            fi
         ;;
     esac
 }
@@ -526,7 +561,7 @@ restic_backup() {
         local _policies=($(echo ${_snapshots_policy} | jq -r 'keys[]'))
         local _policy_flag
         local _value
-        for _policy in ${_policies[@]}; do
+        for _policy in "${_policies[@]}"; do
             if [[ "${_FORGET_POLICY[${_policy}]}" == "" ]]; then
                 echo "[ERROR] invalid snapshot policy: ${_policy}" >&2
                 return 1
@@ -542,8 +577,8 @@ restic_backup() {
         (( ${?} == 0 )) || return 1
         readarray -t _src_paths <<< "${_SRC_REPOS[${i}]}"
         if [[ "${_SRC_IN_ONE[${i}]}" == "true" ]]; then
-            echo "[INFO] Source: ${_src_paths[@]}, Destination: ${_DEST_REPOS[${i}]}"
-            restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} ${_src_paths[@]}  
+            echo "[INFO] Source: ${_src_paths[*]}, Destination: ${_DEST_REPOS[${i}]}"
+            restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} "${_src_paths[@]}"  
             (( ${?} == 0 )) || return 1
         else
             for (( j=0; j<${#_src_paths[@]}; j++ )); do
