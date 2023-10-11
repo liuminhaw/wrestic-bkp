@@ -156,11 +156,14 @@ s3 configuration block is consisted of an array with pairs of `aws_access_key_id
     Allow Actions: ListBucket, GetBucketLocation
     Resource: arn:aws:s3:::restic-demo
     ```
+
+    - `aws_profile_name` has precedence over aws credential setting (`aws_access_key_id, aws_secret_key_id, aws_region`)
 - src_in_one: Set `true` to backup listed source paths in single snapshot (Optional, default: `false`)
 
 ```json
 "s3": [
     {
+        "aws_profile_name": "aws profile name",
         "aws_access_key_id": "access key id credential",
         "aws_secret_access_key": "secret access key credential",
         "aws_region": "aws region",
