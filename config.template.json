@@ -6,6 +6,7 @@
       "host": "Host from ssh config file",
       "src": ["Syncing source path 1", "Syncing source path 2"],
       "dest": "Syncing destination path",
+      "tags": ["tag1", "tag2"],
       "src_in_one": false // Set to backup listed src path in single snapshot, optional
     },
     {
@@ -18,6 +19,7 @@
     {
       "src": ["Syncing source path 1", "Syncing source path 2"],
       "dest": "Syncing destination path",
+      "tags": ["tag1", "tag2"],
       "src_in_one": true // Set to backup listed src path in single snapshot, optional
     },
     {
@@ -33,6 +35,7 @@
       "aws_region": "aws region",
       "src": ["Syncing source path 1", "Syncing source path 2"],
       "dest": "Syncing destination path (bucket/path/to/backup)",
+      "tags": ["tag1", "tag2"],
       "src_in_one": false // Set to backup listed src path in single snapshot, optional
     }
   ],
@@ -46,7 +49,8 @@
         // (Optional, default to show all snapshots)
         "path/to/mount/1",
         "path/to/mount/2"
-      ]
+      ],
+      "tags": ["tag1", "tag2"]
     },
     "mount_point_2": {
       "default_password": false, // Set to use password_file as decrypt password, optional
