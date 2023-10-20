@@ -30,6 +30,7 @@ declare -a _SRC_IN_ONE
 declare -a _DEST_REPOS
 declare -a _SRC_REPOS
 declare -a _REPO_CREDS
+declare -a _TAGS
 
 # ----------------------------------------------------------------------------
 # Show script usage
@@ -226,9 +227,15 @@ read_local() {
         local _src=$(jq -r --arg i "${i}" '.local[$i|tonumber].src[]' ${_config})
         local _dest=$(jq -r --arg i "${i}" '.local[$i|tonumber].dest' ${_config})
         local _src_in_one=$(jq -r --arg i "${i}" '.local[$i|tonumber].src_in_one' ${_config})
+        local _tags=$(jq -r --arg i "${i}" '.local[$i|tonumber].tags' ${_config})
         _DEST_REPOS[${i}]="${_dest}"
         _SRC_REPOS[${i}]="${_src}"
         _SRC_IN_ONE[${i}]="${_src_in_one}"
+        if [[ "${_tags}" == "null" ]]; then
+            _TAGS[${i}]=""
+        else
+            _TAGS[${i}]=$(jq -r '.[]' <<< ${_tags})
+        fi
     done
 }
 
@@ -257,9 +264,15 @@ read_sftp() {
         local _src=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].src[]' ${_config})
         local _dest=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].dest' ${_config})
         local _src_in_one=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].src_in_one' ${_config})
+        local _tags=$(jq -r --arg i "${i}" '.sftp[$i|tonumber].tags' ${_config})
         _DEST_REPOS[${i}]="sftp:${_host}:${_dest}"
         _SRC_REPOS[${i}]="${_src}"
         _SRC_IN_ONE[${i}]="${_src_in_one}"
+        if [[ "${_tags}" == "null" ]]; then
+            _TAGS[${i}]=""
+        else
+            _TAGS[${i}]=$(jq -r '.[]' <<< ${_tags})
+        fi
     done
 }
 
@@ -295,6 +308,7 @@ read_s3() {
     local _src
     local _dest
     local _src_in_one
+    local _tags
     for (( i=0; i<_block_len; i++ )); do
         _aws_profile=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_profile_name' "${_config}")
         _aws_access_key_id=$(jq -r --arg i "${i}" '.s3[$i|tonumber].aws_access_key_id' "${_config}")
@@ -303,6 +317,7 @@ read_s3() {
         _src=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src[]' "${_config}")
         _dest=$(jq -r --arg i "${i}" '.s3[$i|tonumber].dest' "${_config}")
         _src_in_one=$(jq -r --arg i "${i}" '.s3[$i|tonumber].src_in_one' "${_config}")
+        _tags=$(jq -r --arg i "${i}" '.s3[$i|tonumber].tags' "${_config}")
 
         _DEST_REPOS[${i}]="s3:s3.amazonaws.com/${_dest}"
         _SRC_REPOS[${i}]="${_src}"
@@ -311,6 +326,11 @@ read_s3() {
             _REPO_CREDS[${i}]="aws-profile:${_aws_profile}"
         else
             _REPO_CREDS[${i}]="aws-key:${_aws_access_key_id}:${_aws_secret_access_key}:${_aws_region}"
+        fi
+        if [[ "${_tags}" == "null" ]]; then
+            _TAGS[${i}]=""
+        else
+            _TAGS[${i}]=$(jq -r '.[]' <<< ${_tags})
         fi
     done
 }
@@ -572,18 +592,38 @@ restic_backup() {
         done
     fi
     local _src_paths
+    local _tags
+    local _tag_options=""
     for (( i=0; i<${#_SRC_REPOS[@]}; i++ )); do
         repo_permission_init ${_type} "${_REPO_CREDS[${i}]}"
         (( ${?} == 0 )) || return 1
+        echo "Read tags"
+        readarray -t _tags <<< "${_TAGS[${i}]}"
+        if [[ -z ${_tags[*]} ]]; then
+            _tag_options=""
+        else
+            for (( j=0; j<${#_tags[@]}; j++ )); do
+                _tag_options="--tag ${_tags[j]} ${_tag_options}"
+            done
+        fi
+
         readarray -t _src_paths <<< "${_SRC_REPOS[${i}]}"
         if [[ "${_SRC_IN_ONE[${i}]}" == "true" ]]; then
             echo "[INFO] Source: ${_src_paths[*]}, Destination: ${_DEST_REPOS[${i}]}"
-            restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} "${_src_paths[@]}"  
+            restic backup -v -r ${_DEST_REPOS[${i}]} \
+                --exclude-file="${_exclude_file}" \
+                --password-file ${_password_file} \
+                ${_tag_options} \
+                "${_src_paths[@]}"
             (( ${?} == 0 )) || return 1
         else
             for (( j=0; j<${#_src_paths[@]}; j++ )); do
                 echo "[INFO] Source: ${_src_paths[${j}]}, Destination: ${_DEST_REPOS[${i}]}"
-                restic backup -v -r ${_DEST_REPOS[${i}]} --exclude-file="${_exclude_file}" --password-file ${_password_file} ${_src_paths[${j}]}
+                restic backup -v -r ${_DEST_REPOS[${i}]} \
+                    --exclude-file="${_exclude_file}" \
+                    --password-file ${_password_file} \
+                    ${_tag_options} \
+                    ${_src_paths[${j}]}
                 (( ${?} == 0 )) || return 1
             done
         fi
