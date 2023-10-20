@@ -365,6 +365,13 @@ read_mount_options() {
             _options+="--path ${_path} "
         done
     fi
+    local _tags
+    _tags=($(jq -r --arg mp "${_mount_point}" '.mount[$mp].tags[]' ${_config} 2> /dev/null))
+    if [[ ${?} -eq 0 ]]; then
+        for _tag in "${_tags[@]}"; do
+            _options+="--tag ${_tag} "
+        done
+    fi
 
     echo "${_options}"
 }
