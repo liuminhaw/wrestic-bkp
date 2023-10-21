@@ -118,7 +118,8 @@ check_config_required_file() {
 # Outputs:
 #   Write error messages to stderr
 # Returns:
-#   non-zero on error
+#   1 on execution error
+#   2 on function usage error
 # -------------------------------------------------------------------------------------------------
 read_mount_point() {
     if [[ "${#}" -ne 2 ]]; then
@@ -150,21 +151,13 @@ read_mount_point() {
             fi
         ;;
         s3)
+            local _aws_profile=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].aws_profile_name' ${_config})
             local _aws_access_key_id=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].aws_access_key_id' ${_config})
             local _aws_secret_access_key=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].aws_secret_access_key' ${_config})
             local _aws_region=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].aws_region' ${_config})
-            if [[ "${_aws_access_key_id}" == "null" ]]; then
-                echo "[ERROR] .mount.${_mount_point}.aws_access_key_id value not set with type ${_type}" >&2
-                return 1
-            fi
-            if [[ "${_aws_secret_access_key}" == "null" ]]; then
-                echo "[ERROR] .mount.${_mount_point}.aws_secret_access_key value not set with type ${_type}" >&2
-                return 1
-            fi
-            if [[ "${_aws_region}" == "null" ]]; then
-                echo "[ERROR] .mount.${_mount_point}.aws_region value not set with type ${_type}" >&2
-                return 1
-            fi
+            aws_creds_check "${_aws_profile}" "${_aws_access_key_id}" "${_aws_secret_access_key}" "${_aws_region}"
+            (( ${?} == 0 )) || return 1
+        ;;
     esac
 
     local _src=$(jq -r --arg _mp "${_mount_point}" '.mount[$_mp].src' ${_config})
@@ -192,7 +185,11 @@ read_mount_point() {
         ;;
         s3)
             _SRC_REPOS[0]="s3:s3.amazonaws.com/${_src}"
-            _REPO_CREDS[0]="${_aws_access_key_id}:${_aws_secret_access_key}:${_aws_region}"
+            if [[ -n ${_aws_profile} && "${_aws_profile}" != "null" ]]; then
+                _REPO_CREDS[${i}]="aws-profile:${_aws_profile}"
+            else
+                _REPO_CREDS[0]="aws-key:${_aws_access_key_id}:${_aws_secret_access_key}:${_aws_region}"
+            fi
         ;;
         *)
             echo "[ERROR] invalid type value: ${_type}"
@@ -286,7 +283,8 @@ read_sftp() {
 #   _SRC_REPOS
 #   _REPO_CREDS
 # Returns:
-#   2 if function usage error
+#   1 on function execution error
+#   2 on function usage error
 # --------------------------------------------------------------------------------
 read_s3() {
     if [[ "${#}" -ne 1 ]]; then
@@ -322,6 +320,10 @@ read_s3() {
         _DEST_REPOS[${i}]="s3:s3.amazonaws.com/${_dest}"
         _SRC_REPOS[${i}]="${_src}"
         _SRC_IN_ONE[${i}]="${_src_in_one}"
+
+        aws_creds_check "${_aws_profile}" "${_aws_access_key_id}" "${_aws_secret_access_key}" "${_aws_region}"
+        (( ${?} == 0 )) || return 1
+
         if [[ -n ${_aws_profile} && ${_aws_profile} != "null" ]]; then 
             _REPO_CREDS[${i}]="aws-profile:${_aws_profile}"
         else
@@ -410,6 +412,48 @@ summarize_backup_config() {
         *)
             return 1
     esac
+}
+
+# ---------------------------------------------------------------------------------
+# Verify AWS credential config, aws profile or aws key / secret pair should be set
+# Arguments:
+#   aws profile
+#   aws access key id
+#   aws secret access key
+#   aws region
+# Returns:
+#   1 on invalid setting
+#   2 on usage error
+# ---------------------------------------------------------------------------------
+aws_creds_check() {
+    if [[  "${#}" -ne 4 ]]; then
+        echo "[ERROR] Function ${FUNCNAME[0]} usage error" >&2
+        return 2
+    fi
+
+    local _aws_profile=${1}
+    local _aws_access_key_id=${2}
+    local _aws_secret_access_key=${3}
+    local _aws_region=${4}
+
+    if [[ -n ${_aws_profile} && "${_aws_profile}" != "null" ]]; then
+        echo "Using aws profile: ${_aws_profile}"
+        return 0
+    fi
+
+    echo "AWS profile not set, use config key and secret"
+    if [[ -z ${_aws_access_key_id} || "${_aws_access_key_id}" == "null" ]]; then
+        echo "No aws access key, please check config setting"
+        return 1
+    fi
+    if [[ -z ${_aws_secret_access_key} || "${_aws_secret_access_key}" == "null" ]]; then
+        echo "No aws secret access key, please check config setting"
+        return 1
+    fi
+    if [[ -z ${_aws_region} || "${_aws_region}" == "null" ]]; then
+        echo "No aws region, please check config setting"
+        return 1
+    fi
 }
 
 # ------------------------------------------------------------------------------
