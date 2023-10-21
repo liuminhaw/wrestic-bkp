@@ -74,6 +74,7 @@ At local directory of disk. Local is the default backup type if no `--type` opti
 Local configuration block is consisted of an array with pairs of `src` and `dest` set.
 - source: Backup source paths, list of paths to backup
 - destination: Backup destination path
+- tags: tag to set on backup snapshots (Optional)
 - src_in_one: Set `true` to backup listed source paths in single snapshot (Optional, default: `false`)
 
 ```json
@@ -84,6 +85,10 @@ Local configuration block is consisted of an array with pairs of `src` and `dest
             "Syncing source path 2"
         ],
         "dest": "Syncing destination path",
+        "tags": [
+            "tag1",
+            "tag2"
+        ],
         "src_in_one": true
     },
     {
@@ -103,6 +108,7 @@ SFTP configuration block is consisted of an array with pairs of `host`, `src`, a
 - source: Backup source paths, list of paths to backup
 - destination: Backup destination path
 - host (`sftp` type only): host name set in ssh config file 
+- tags: tag to set on backup snapshots (Optional)
 - src_in_one: Set `true` to backup listed source paths in single snapshot (Optional, default: `false`)
 
 ```json
@@ -114,6 +120,10 @@ SFTP configuration block is consisted of an array with pairs of `host`, `src`, a
             "Syncing source path 2"
         ],
         "dest": "Syncing destination path",
+        "tags": [
+            "tag1",
+            "tag2"
+        ],
         "src_in_one": true
     },
     {
@@ -144,6 +154,7 @@ Backup to s3 bucket as destination. To use `s3` type on backup, set `--type` opt
 s3 configuration block is consisted of an array with pairs of `aws_access_key_id`, `aws_secret_access_key`, `aws_region`, `src`, and `dest` set. 
 - source: Backup source paths, list of paths to backup
 - destination: Destination bucket path
+- tags: tag to set on backup snapshots (Optional)
 - aws credential: Grant permission to perform action on s3 bucket
     ```bash
     # Permission on objects
@@ -172,6 +183,10 @@ s3 configuration block is consisted of an array with pairs of `aws_access_key_id
             "Syncing source path 2"
         ],
         "dest": "Syncing destination path (bucket/path/to/backup)",
+        "tags": [
+            "tag1",
+            "tag2"
+        ],
         "src_in_one": true
     }
 ]
@@ -191,6 +206,10 @@ Snapshot is backup on local directory or disk
     "type": "local",
     "src": "restic backup location",
     "dest": "Local mount point destination",
+    "tags": [
+        "tag1",
+        "tag2"
+    ],
     "paths": [
         "/snapshot/matched/path",
         "/other/snapshot/matched/path"
@@ -209,6 +228,10 @@ Snapshot is backup using SFTP
     "host": "Host from ssh config file",
     "src": "restic backup location",
     "dest": "Local mount point desitnation"
+    "tags": [
+        "tag1",
+        "tag2"
+    ]
 }
 ```
 - type: Specified `sftp` type is used
@@ -225,13 +248,18 @@ Snapshot is backup using s3
     "aws_secret_access_key": "secret access key credential",
     "aws_region": "aws region",
     "src": "restic backup location (bucket/path/to/backup)",
-    "dest": "Local mount point destination"
+    "dest": "Local mount point destination",
+    "tags": [
+        "tag1",
+        "tag2"
+    ]
 }
 ```
 
 ##### Optional keys
 - `default_password`: Set if use `password_file` as decrypt password. Interactively ask for password if set to `false` (default value `false`).
 - `paths`: Mount snapshots with given paths only, default to show all snapshots if not set.
+- `tags`: Mount snapshots which include any of given tags, default to show all snapshots if not set.
 
 #### Snapshot policy
 Set policies to indicate which snapshots to keep and which snapshots to remove
