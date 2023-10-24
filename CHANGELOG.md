@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0] - 2023-10-24
+
+### Changed
+
+- Rename config template from `config.template` to `config.template.json` ([`2f49eb6`](https://github.com/liuminhaw/wrestic-bkp/pull/46/commits/2f49eb6)) 
+
+### Added
+
+- Add aws profile setting as a new way for s3 authentication ([#48](https://github.com/liuminhaw/wrestic-bkp/pull/48))
+- Add `src_in_one` config to backup listed source paths together ([#46](https://github.com/liuminhaw/wrestic-bkp/pull/46))
+- Add `tags` config for tagging and filtering backups ([#50](https://github.com/liuminhaw/wrestic-bkp/pull/50))
+
 ## [0.2.2] - 2023-10-08
 
 ### Fixed
@@ -58,6 +70,8 @@
 ## [0.1.0] - 2022-02-07
 
 _:seedling: Initial release._
+
+[0.3.0]: https://github.com/liuminhaw/restic-bkp/releases/tag/v0.3.0
 
 [0.2.2]: https://github.com/liuminhaw/wrestic-bkp/releases/tag/v0.2.2
 
