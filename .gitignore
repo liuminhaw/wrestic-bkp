@@ -4,3 +4,6 @@ config.json
 # password file
 *.pass
 !.restic.pass
+
+# Executable
+wrestic-bkp
