@@ -4,6 +4,10 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package config
 
 import (
+	"fmt"
+	"strings"
+
+	"github.com/liuminhaw/wrestic-bkp/restic"
 	"github.com/spf13/cobra"
 )
 
@@ -27,4 +31,14 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// configCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func ValidConfigNames(config *restic.Config) string {
+	var builder strings.Builder
+	builder.WriteString("[ ")
+	for _, backup := range config.Backups {
+		builder.WriteString(fmt.Sprintf("'%s' ", backup.Name))
+	}
+	builder.WriteString("]")
+	return builder.String()
 }
