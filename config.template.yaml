@@ -1,0 +1,36 @@
+---
+repository:
+  password: restic encryption password
+
+# List of backup settings, each act as single backp configuration 
+backups:
+- name: Descriptive name 1
+  type: local
+  config:
+    sources:
+      - /backup/source/path1
+      - /backup/source/path2
+    destination: /backup/target/path
+- name: Descriptive name 2
+  type: sftp
+  config:
+    host: sftp host set in ssh config
+    sources:
+      - /backup/source/path1
+      - /backup/source/path2
+    destination: /backup/target/path
+- name: Descriptive name 3
+  type: s3
+  config:
+    accessKeyId: aws access key id
+    secretAccessKey: aws secret access key
+    region: aws region
+    sources:
+      - /backup/source/path1
+      - /backup/source/path2
+    destination: ${BUCKETNAME}/path/to/backup
+
+# TODO: server block to connect with wrestic-brw
+# server:
+...
+       

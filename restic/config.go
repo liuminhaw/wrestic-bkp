@@ -10,19 +10,22 @@ import (
 )
 
 var (
-	ErrConfigNotFound = errors.New("config file not found")
+	ErrConfigNotFound           = errors.New("config file not found")
+	ErrConfigBackupNameNotFound = errors.New("backup name in config not found")
 )
 
 type Config struct {
-	Repository struct {
-		Password string `yaml:"password"`
-	} `yaml:"repository"`
-	Backups []Backup `yaml:"backups"`
+	Repository ConfigRepository `yaml:"repository"`
+	Backups    []Backup         `yaml:"backups"`
 }
 
 type BackupTypeConfig interface {
 	Validate() error
 	String() string
+}
+
+type ConfigRepository struct {
+	Password string `yaml:"password"`
 }
 
 type Backup struct {
@@ -98,6 +101,20 @@ func srcDestString(sources []string, destination string) string {
 	return builder.String()
 }
 
+func CreateRepositoryStruct(cRepo ConfigRepository, bConf BackupTypeConfig) (ResticRepository, error) {
+	switch v := bConf.(type) {
+	case *LocalBackupConfig:
+		return LocalBackupRepository{
+			Password:    cRepo.Password,
+			Destination: v.Destination,
+		}, nil
+	default:
+		fmt.Printf("type of bConf: %T\n", v)
+		return nil, errors.New("no matched concrete type")
+	}
+}
+
+// NewConfig read in file and return restic Config type struct
 func NewConfig(filepath string) (*Config, error) {
 	data, err := os.ReadFile(filepath)
 	if err != nil {
@@ -156,6 +173,36 @@ func NewConfig(filepath string) (*Config, error) {
 	}
 
 	return &config, nil
+}
+
+// ReadBackup find Backup struct with given name and returns it.
+// Return ErrConfigBackupNameNotFound error if no matching name found in config
+func (c *Config) ReadBackup(name string) (Backup, error) {
+	for _, backup := range c.Backups {
+		if backup.Name == name {
+			return backup, nil
+		}
+	}
+
+	return Backup{}, ErrConfigBackupNameNotFound
+}
+
+func (c *Config) BackupNames() []string {
+	names := []string{}
+	for _, backup := range c.Backups {
+		names = append(names, backup.Name)
+	}
+
+	return names
+}
+
+func (c *Config) IsValidName(name string) bool {
+	for _, backup := range c.Backups {
+		if backup.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 // type Config struct {

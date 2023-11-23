@@ -26,8 +26,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/exec"
-	"strings"
 
 	"github.com/liuminhaw/wrestic-bkp/restic"
 	"github.com/spf13/cobra"
@@ -58,11 +56,11 @@ var showCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("load config: %w", err)
 		}
-		if isValidConfigName(config, args[0]) {
-			return nil
+		if !config.IsValidName(args[0]) {
+			return fmt.Errorf("given name '%s' not found in config backup names: %v", args[0], ValidConfigNames(config))
 		}
 
-		return fmt.Errorf("given name '%s' not found in config backup names: %v", args[0], validConfigNames(config))
+		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var backupName string
@@ -70,9 +68,9 @@ var showCmd = &cobra.Command{
 			backupName = args[0]
 		}
 
-		err := CmdCheck("restic")
+		err := restic.ResticCheck()
 		if err != nil {
-			fmt.Println("restic should be installed before using this program")
+			fmt.Println("restic should be installed before running this program")
 			os.Exit(1)
 		}
 
@@ -108,33 +106,4 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// checkCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-// CmdCheck checks if given command is available in system PATH
-func CmdCheck(command string) error {
-	_, err := exec.LookPath(command)
-	if err != nil {
-		return fmt.Errorf("command not found: %s", command)
-	}
-
-	return nil
-}
-
-func isValidConfigName(config *restic.Config, name string) bool {
-	for _, backup := range config.Backups {
-		if backup.Name == name {
-			return true
-		}
-	}
-	return false
-}
-
-func validConfigNames(config *restic.Config) string {
-	var builder strings.Builder
-	builder.WriteString("[ ")
-	for _, backup := range config.Backups {
-		builder.WriteString(fmt.Sprintf("'%s' ", backup.Name))
-	}
-	builder.WriteString("]")
-	return builder.String()
 }
