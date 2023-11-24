@@ -1,24 +1,24 @@
 ---
 repository:
-  password: restic encryption password
+  password: test1234
 
 # List of backup settings, each act as single backp configuration 
 backups:
-- name: Descriptive name 1
+- name: local-test
   type: local
   config:
     sources:
-      - /backup/source/path1
-      - /backup/source/path2
-    destination: /backup/target/path
-- name: Descriptive name 2
+      - /home/haw/Documents/mdn-learning
+      - /home/haw/Scripts
+    destination: /tmp/wrestic-bkp_local-test
+- name: sftp-test
   type: sftp
   config:
     host: sftp host set in ssh config
     sources:
       - /backup/source/path1
       - /backup/source/path2
-    destination: /backup/target/path
+    destination: /tmp/wrestic-bkp_sftp-test
 - name: Descriptive name 3
   type: s3
   config:

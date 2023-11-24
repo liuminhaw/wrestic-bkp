@@ -15,10 +15,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "init BackupName",
-	Short: "Init repository for BackupName",
+// backupCmd represents the backup command
+var backupCmd = &cobra.Command{
+	Use:   "backup BackupName",
+	Short: "Backup from source paths to repository referencing BackupName configuration",
 	Long:  ``,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
@@ -42,7 +42,7 @@ var initCmd = &cobra.Command{
 
 		config, err := restic.NewConfig(viper.ConfigFileUsed())
 		if err != nil {
-			log.Fatalf("repository init: %v\n", err)
+			log.Fatalf("repository backup: %v\n", err)
 		}
 		backupConf, err := config.ReadBackup(backupName)
 		if err != nil {
@@ -55,28 +55,24 @@ var initCmd = &cobra.Command{
 
 		backupRepo, err := config.CreateRepositoryStruct(backupConf.Config)
 		if err != nil {
-			log.Fatalf("repository init: %v\n", err)
+			log.Fatalf("repository backup: %v\n", err)
 		}
-		output, err := backupRepo.Init()
-		if err != nil {
-			fmt.Print(string(output))
-			fmt.Printf("wrestic init: %v\n", err)
-			os.Exit(1)
+		if err := backupRepo.Backup(); err != nil {
+			log.Fatalf("repository backup: %v\n", err)
 		}
-		fmt.Println(string(output))
 	},
 }
 
 func init() {
-	RepositoryCmd.AddCommand(initCmd)
+	RepositoryCmd.AddCommand(backupCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// initCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// backupCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// backupCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
