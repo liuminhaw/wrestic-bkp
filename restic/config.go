@@ -101,19 +101,6 @@ func srcDestString(sources []string, destination string) string {
 	return builder.String()
 }
 
-func CreateRepositoryStruct(cRepo ConfigRepository, bConf BackupTypeConfig) (ResticRepository, error) {
-	switch v := bConf.(type) {
-	case *LocalBackupConfig:
-		return LocalBackupRepository{
-			Password:    cRepo.Password,
-			Destination: v.Destination,
-		}, nil
-	default:
-		fmt.Printf("type of bConf: %T\n", v)
-		return nil, errors.New("no matched concrete type")
-	}
-}
-
 // NewConfig read in file and return restic Config type struct
 func NewConfig(filepath string) (*Config, error) {
 	data, err := os.ReadFile(filepath)
@@ -203,6 +190,20 @@ func (c *Config) IsValidName(name string) bool {
 		}
 	}
 	return false
+}
+
+func (c *Config) CreateRepositoryStruct(bConf BackupTypeConfig) (ResticRepository, error) {
+	switch v := bConf.(type) {
+	case *LocalBackupConfig:
+		return LocalBackupRepository{
+			Password:    c.Repository.Password,
+			Destination: v.Destination,
+			Sources:     v.Sources,
+		}, nil
+	default:
+		fmt.Printf("type of bConf: %T\n", v)
+		return nil, errors.New("no matched concrete type")
+	}
 }
 
 // type Config struct {
