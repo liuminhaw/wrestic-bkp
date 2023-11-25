@@ -8,7 +8,9 @@ import (
 	"os/exec"
 )
 
-const passwordEnv string = "RESTIC_PASSWORD"
+const (
+	passwordEnv string = "RESTIC_PASSWORD"
+)
 
 type ResticRepository interface {
 	Init() ([]byte, error)

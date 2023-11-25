@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/liuminhaw/wrestic-bkp/restic/tests"
 	"gopkg.in/yaml.v3"
 )
 
@@ -204,6 +205,21 @@ func (c *Config) CreateRepositoryStruct(bConf BackupTypeConfig) (ResticRepositor
 		fmt.Printf("type of bConf: %T\n", v)
 		return nil, errors.New("no matched concrete type")
 	}
+}
+
+func (c *Config) CreateTestStruct(bConf BackupTypeConfig) (tests.ResticTest, error) {
+	switch v := bConf.(type) {
+	case *LocalBackupConfig:
+		return tests.LocalRepositoryTest{
+			Password:    c.Repository.Password,
+			Destination: v.Destination,
+			Sources:     v.Sources,
+		}, nil
+	default:
+		fmt.Printf("type of bConf: %T\n", v)
+		return nil, errors.New("no matched concrete type")
+	}
+
 }
 
 // type Config struct {
