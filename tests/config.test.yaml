@@ -1,0 +1,18 @@
+---
+repository:
+  password: resticTestDefaultPassword
+
+# List of backup settings, each act as single backp configuration 
+backups:
+- name: local-test
+  type: local
+  config:
+    sources:
+      - /tmp/local-source-dir1
+      - /tmp/local-source-dir2
+    destination: /tmp/wrestic-bkp_local-test
+
+# TODO: server block to connect with wrestic-brw
+# server:
+...
+       

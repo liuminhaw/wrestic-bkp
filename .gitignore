@@ -1,7 +1,6 @@
 # config file
 config.json
 config.yaml
-config.test.yaml
 
 # password file
 *.pass

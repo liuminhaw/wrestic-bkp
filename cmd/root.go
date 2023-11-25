@@ -27,6 +27,7 @@ import (
 
 	"github.com/liuminhaw/wrestic-bkp/cmd/config"
 	"github.com/liuminhaw/wrestic-bkp/cmd/repository"
+	"github.com/liuminhaw/wrestic-bkp/cmd/test"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -48,6 +49,7 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	rootCmd.AddCommand(config.ConfigCmd)
 	rootCmd.AddCommand(repository.RepositoryCmd)
+	rootCmd.AddCommand(test.TestCmd)
 	err := rootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
