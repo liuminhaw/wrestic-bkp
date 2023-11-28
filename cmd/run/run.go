@@ -1,7 +1,7 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package repository
+package run
 
 import (
 	"fmt"
@@ -12,9 +12,9 @@ import (
 )
 
 // repositoryCmd represents the repository command
-var RepositoryCmd = &cobra.Command{
-	Use:   "repository",
-	Short: "Execute actions on restic repository",
+var RunCmd = &cobra.Command{
+	Use:   "run",
+	Short: "Restic execution",
 	Long:  ``,
 	// Run: func(cmd *cobra.Command, args []string) {
 	// 	fmt.Println("repository called")

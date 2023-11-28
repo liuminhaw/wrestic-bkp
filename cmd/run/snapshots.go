@@ -1,7 +1,7 @@
 /*
 Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 */
-package repository
+package run
 
 import (
 	"errors"
@@ -15,10 +15,10 @@ import (
 	"github.com/spf13/viper"
 )
 
-// initCmd represents the init command
-var initCmd = &cobra.Command{
-	Use:   "init BackupName",
-	Short: "Init repository for BackupName",
+// snapshotsCmd represents the snapshots command
+var snapshotsCmd = &cobra.Command{
+	Use:   "snapshots BackupName",
+	Short: "List snapshots from BackupName config",
 	Long:  ``,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if err := cobra.ExactArgs(1)(cmd, args); err != nil {
@@ -42,7 +42,7 @@ var initCmd = &cobra.Command{
 
 		config, err := restic.NewConfig(viper.ConfigFileUsed())
 		if err != nil {
-			log.Fatalf("repository init: %v\n", err)
+			log.Fatalf("restic snapshots: %v\n", err)
 		}
 		backupConf, err := config.ReadBackup(backupName)
 		if err != nil {
@@ -50,17 +50,17 @@ var initCmd = &cobra.Command{
 				fmt.Printf("backup %s not found in config file\n", backupName)
 				os.Exit(1)
 			}
-			log.Fatalf("repository init: %v\n", err)
+			log.Fatalf("restic snapshots: %v\n", err)
 		}
 
 		backupRepo, err := config.CreateRepositoryStruct(backupConf.Config)
 		if err != nil {
-			log.Fatalf("repository init: %v\n", err)
+			log.Fatalf("restic snapshots: %v\n", err)
 		}
-		output, err := backupRepo.Init()
+		output, err := backupRepo.Snapshots()
 		if err != nil {
 			fmt.Print(string(output))
-			fmt.Printf("wrestic init: %v\n", err)
+			fmt.Printf("restic snapshots: %v\n", err)
 			os.Exit(1)
 		}
 		fmt.Println(string(output))
@@ -68,15 +68,15 @@ var initCmd = &cobra.Command{
 }
 
 func init() {
-	RepositoryCmd.AddCommand(initCmd)
+	RunCmd.AddCommand(snapshotsCmd)
 
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// initCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// snapshotsCmd.PersistentFlags().String("foo", "", "A help for foo")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// initCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// snapshotsCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
