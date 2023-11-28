@@ -15,6 +15,7 @@ const (
 type ResticRepository interface {
 	Init() ([]byte, error)
 	Backup() error
+	Snapshots() ([]byte, error)
 }
 
 type LocalBackupRepository struct {
@@ -72,4 +73,20 @@ func (r LocalBackupRepository) Backup() error {
 	}
 
 	return nil
+}
+
+func (r LocalBackupRepository) Snapshots() ([]byte, error) {
+	os.Setenv(passwordEnv, r.Password)
+
+	commandArg := []string{"snapshots", "-r", r.Destination}
+
+	var stderr bytes.Buffer
+	cmd := exec.Command("restic", commandArg...)
+	cmd.Stderr = &stderr
+	output, err := cmd.Output()
+	if err != nil {
+		return stderr.Bytes(), fmt.Errorf("localBackupRepository snapshots: %w", err)
+	}
+
+	return output, nil
 }
