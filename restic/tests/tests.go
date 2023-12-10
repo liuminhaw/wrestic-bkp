@@ -21,6 +21,7 @@ const (
 
 type ResticTest interface {
 	TestGenerate() error
+	TestClean() error
 }
 
 type LocalRepositoryTest struct {
@@ -71,6 +72,24 @@ func (t LocalRepositoryTest) TestGenerate() error {
 
 			f.Close()
 		}
+	}
+
+	return nil
+}
+
+func (t LocalRepositoryTest) TestClean() error {
+	// Remove backup destination
+	if err := os.RemoveAll(t.Destination); err != nil {
+		return fmt.Errorf("test clean destination %s: %w", t.Destination, err)
+	}
+	fmt.Printf("Remove destination directory: %s\n", t.Destination)
+
+	// Remove backup sources
+	for _, source := range t.Sources {
+		if err := os.RemoveAll(source); err != nil {
+			return fmt.Errorf("test clean source %s: %w", source, err)
+		}
+		fmt.Printf("Remove source directory: %s\n", source)
 	}
 
 	return nil
