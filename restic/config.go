@@ -38,6 +38,7 @@ type Backup struct {
 type LocalBackupConfig struct {
 	Sources     []string `yaml:"sources"`
 	Destination string   `yaml:"destination"`
+	Excludes    []string `yaml:"excludes"`
 }
 
 func (c LocalBackupConfig) Validate() error {
@@ -200,6 +201,7 @@ func (c *Config) CreateRepositoryStruct(bConf BackupTypeConfig) (ResticRepositor
 			Password:    c.Repository.Password,
 			Destination: v.Destination,
 			Sources:     v.Sources,
+			Excludes:    v.Excludes,
 		}, nil
 	default:
 		fmt.Printf("type of bConf: %T\n", v)
