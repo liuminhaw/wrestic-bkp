@@ -11,7 +11,8 @@ backups:
       - /tmp/local-source-dir1
       - /tmp/local-source-dir2
     destination: /tmp/wrestic-bkp_local-test
-
+    excludes:
+      - "test1*"
 # TODO: server block to connect with wrestic-brw
 # server:
 ...

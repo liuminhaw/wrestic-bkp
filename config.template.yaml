@@ -11,6 +11,9 @@ backups:
       - /backup/source/path1
       - /backup/source/path2
     destination: /backup/target/path
+    excludes:
+      - exclude/file/path1
+      - exclude/file/path2
 - name: Descriptive name 2
   type: sftp
   config:
@@ -19,6 +22,9 @@ backups:
       - /backup/source/path1
       - /backup/source/path2
     destination: /backup/target/path
+    excludes:
+      - exclude/file/path1
+      - exclude/file/path2
 - name: Descriptive name 3
   type: s3
   config:
@@ -29,6 +35,9 @@ backups:
       - /backup/source/path1
       - /backup/source/path2
     destination: ${BUCKETNAME}/path/to/backup
+    excludes:
+      - exclude/file/path1
+      - exclude/file/path2
 
 # TODO: server block to connect with wrestic-brw
 # server:
