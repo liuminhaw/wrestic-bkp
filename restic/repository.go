@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 )
 
 const (
-	passwordEnv string = "RESTIC_PASSWORD"
+	passwordEnv            string = "RESTIC_PASSWORD"
+	resticProgressFPS      string = "RESTIC_PROGRESS_FPS"
+	resticProgressFPSValue string = "2"
 )
 
 type ResticRepository interface {
@@ -43,6 +46,7 @@ func (r LocalBackupRepository) Init() ([]byte, error) {
 
 func (r LocalBackupRepository) Backup() error {
 	os.Setenv(passwordEnv, r.Password)
+	os.Setenv(resticProgressFPS, resticProgressFPSValue)
 
 	commandArg := []string{"backup", "-r", r.Destination}
 	commandArg = append(commandArg, r.Sources...)
@@ -73,9 +77,21 @@ func (r LocalBackupRepository) Backup() error {
 	}
 
 	// Read from the pipe
+	linesCount := 0
 	scanner := bufio.NewScanner(stdout)
 	for scanner.Scan() {
-		fmt.Println(scanner.Text()) // Print each line of output
+		str := scanner.Text()
+		// Check if string start with pattern `[x:xx]`
+		pattern := regexp.MustCompile(`^\[\d:\d\d\]`)
+		if pattern.MatchString(str) {
+			for i := 0; i < linesCount; i++ {
+				fmt.Print("\033[A")
+			}
+			fmt.Print("\033[K")
+			linesCount = 0
+		}
+		fmt.Println(str) // Print each line of output
+		linesCount++
 	}
 
 	// Wait for the command to finish
@@ -101,4 +117,19 @@ func (r LocalBackupRepository) Snapshots() ([]byte, error) {
 	}
 
 	return output, nil
+}
+
+func countStringLines(s string) int {
+	count := 0
+	for _, c := range s {
+		if c == '\n' {
+			count++
+		}
+	}
+
+	if len(s) > 0 && s[len(s)-1] != '\n' {
+		count++
+	}
+
+	return count
 }
