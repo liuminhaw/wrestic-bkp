@@ -76,6 +76,7 @@ type S3BackupConfig struct {
 	Region          string   `yaml:"region"`
 	Sources         []string `yaml:"sources"`
 	Destination     string   `yaml:"destination"`
+	Excludes        []string `yaml:"excludes"`
 }
 
 func (c S3BackupConfig) Validate() error {
@@ -202,6 +203,15 @@ func (c *Config) CreateRepositoryStruct(bConf BackupTypeConfig) (ResticRepositor
 			Destination: v.Destination,
 			Sources:     v.Sources,
 			Excludes:    v.Excludes,
+		}, nil
+	case *S3BackupConfig:
+		return S3BackupRepository{
+			Password:        c.Repository.Password,
+			Destination:     v.Destination,
+			Sources:         v.Sources,
+			Excludes:        v.Excludes,
+			AccessKeyId:     v.AccessKeyId,
+			SecretAccessKey: v.SecretAccessKey,
 		}, nil
 	default:
 		fmt.Printf("type of bConf: %T\n", v)
