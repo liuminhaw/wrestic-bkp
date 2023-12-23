@@ -70,7 +70,7 @@ func (r LocalBackupRepository) Backup() error {
 	for scanner.Scan() {
 		str := scanner.Text()
 		// Check if string start with pattern `[x:xx]`
-		pattern := regexp.MustCompile(`^\[\d:\d\d\]`)
+		pattern := regexp.MustCompile(`^\[\d+:\d\d\]`)
 		if pattern.MatchString(str) {
 			for i := 0; i < linesCount; i++ {
 				fmt.Print("\033[A")
