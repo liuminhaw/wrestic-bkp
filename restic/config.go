@@ -56,6 +56,7 @@ type SftpBackupConfig struct {
 	Host        string   `yaml:"host"`
 	Sources     []string `yaml:"sources"`
 	Destination string   `yaml:"destination"`
+	Excludes    []string `yaml:"excludes"`
 }
 
 func (c SftpBackupConfig) Validate() error {
@@ -212,6 +213,14 @@ func (c *Config) CreateRepositoryStruct(bConf BackupTypeConfig) (ResticRepositor
 			Excludes:        v.Excludes,
 			AccessKeyId:     v.AccessKeyId,
 			SecretAccessKey: v.SecretAccessKey,
+		}, nil
+	case *SftpBackupConfig:
+		return SftpBackupRepository{
+			Password:    c.Repository.Password,
+			Destination: v.Destination,
+			Sources:     v.Sources,
+			Excludes:    v.Excludes,
+			ConfigHost:  v.Host,
 		}, nil
 	default:
 		fmt.Printf("type of bConf: %T\n", v)
