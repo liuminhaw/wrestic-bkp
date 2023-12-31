@@ -5,32 +5,113 @@ on:
     tags:
     - "v[0-9]+.[0-9]+.[0-9]+"
 
+env:
+  BUILD_OUTPUT: wrestic-bkp_${{ github.ref_name }}_linux
+  BUILD_OUTPUT_GZ: wrestic-bkp_${{ github.ref_name }}_linux.gz
+  SCRIPT_RELEASE_PATH: wrestic-bkp_${{ github.ref_name }}_scripts
+  SCRIPT_RELEASE_PKG: wrestic-bkp_${{ github.ref_name }}_scripts.tar.gz
+
 jobs:
-  pack_and_release:
+  go_build_linux:
     runs-on: ubuntu-latest
-    env:
-      RELEASE_PATH: wrestic-bkp_${{ github.ref_name }}
-      RELEASE_PKG: wrestic-bkp_${{ github.ref_name }}.tar.gz
     steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with: 
+          go-version: '1.21'
+
+      - name: Program build
+        run: |
+          go build -o $BUILD_OUTPUT
+          gzip $BUILD_OUTPUT
+
+      - name: Archive built artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: wrestic-bkp-build
+          path: |
+            $BUILD_OUTPUT_GZ
+          retention-days: 1
+
+
+  pack_scripts:
+    runs-on: ubuntu-latest
+    steps:
+
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           path: checkout-dest
+
       - name: Pack
         run: |
           echo "Pack files"
-          mkdir -p $RELEASE_PATH
-          cp -r checkout-dest/* checkout-dest/.restic.pass $RELEASE_PATH
-          tar -czf $RELEASE_PKG $RELEASE_PATH
-          cp checkout-dest/CHANGELOG.md .
-      - name: Check
-        run: |
-          echo "Check files"
-          ls -la $RELEASE_PATH
-          tar -tzf $RELEASE_PKG
+          mkdir -p $SCRIPT_RELEASE_PATH
+          cp -r checkout-dest/scripts/* checkout-dest/scripts/.restic.pass $SCRIPT_RELEASE_PATH
+          tar -czf $SCRIPT_RELEASE_PKG $SCRIPT_RELEASE_PATH
+
+      - name: Archive packed files
+        uses: actions/upload-artifact@v3 
+        with:
+          name: wrestic-bkp-scripts
+          path: |
+            $SCRIPT_RELEASE_PKG
+          retention-days: 1
+            
+      # - name: Release
+      #   uses: docker://antonyurchenko/git-release:v5
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     args: wrestic-bkp_${{ github.ref_name }}.tar.gz
+
+              
+  pack_changelog:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          path: checkout-dest
+
+      - name: Archive CHANGELOG
+        uses: actions/upload-artifact@v3 
+        with:
+          name: changelog
+          path: |
+            CHANGELOG.md
+          retention-days: 1
+
+          
+  release:
+    needs: [go_build, pack_scripts]
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Download artifact from go_build job
+        uses: actions/download-artifact@v3
+        with:
+          name: wrestic-bkp-build
+
+      - name: Download artifact from pack_scripts job
+        uses: actions/download-artifact@v3
+        with: 
+          name: wrestic-bkp-scripts 
+
+      - name: Download artifact from go_changelog job
+        uses: actions/download-artifact@v3
+        with:
+          name: changelog
+
       - name: Release
         uses: docker://antonyurchenko/git-release:v5
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrerts.GITHUB_TOKEN }}
         with:
-          args: wrestic-bkp_${{ github.ref_name }}.tar.gz
+          args: $SCRIPT_RELEASE_PKG, $BUILD_OUTPUT_GZ
+        
