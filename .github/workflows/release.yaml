@@ -69,8 +69,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v3
-        with:
-          path: checkout-dest
 
       - name: Archive CHANGELOG
         uses: actions/upload-artifact@v3 
