@@ -26,7 +26,7 @@ jobs:
 
       - name: Program build
         run: |
-          go build -o $BUILD_OUTPUT
+          go build -o ${{ env.BUILD_OUTPUT }}
           gzip $BUILD_OUTPUT
 
       - name: Archive built artifact
@@ -34,7 +34,7 @@ jobs:
         with:
           name: wrestic-bkp-build
           path: |
-            $BUILD_OUTPUT_GZ
+            ${{ env.BUILD_OUTPUT_GZ }}
           retention-days: 1
 
 
@@ -50,24 +50,17 @@ jobs:
       - name: Pack
         run: |
           echo "Pack files"
-          mkdir -p $SCRIPT_RELEASE_PATH
-          cp -r checkout-dest/scripts/* checkout-dest/scripts/.restic.pass $SCRIPT_RELEASE_PATH
-          tar -czf $SCRIPT_RELEASE_PKG $SCRIPT_RELEASE_PATH
+          mkdir -p ${{ env.SCRIPT_RELEASE_PATH }}
+          cp -r checkout-dest/scripts/* checkout-dest/scripts/.restic.pass ${{ env.SCRIPT_RELEASE_PATH }}
+          tar -czf ${{ env.SCRIPT_RELEASE_PKG }} ${{ env.SCRIPT_RELEASE_PATH }}
 
       - name: Archive packed files
         uses: actions/upload-artifact@v3 
         with:
           name: wrestic-bkp-scripts
           path: |
-            $SCRIPT_RELEASE_PKG
+            ${{ env.SCRIPT_RELEASE_PKG }}
           retention-days: 1
-            
-      # - name: Release
-      #   uses: docker://antonyurchenko/git-release:v5
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     args: wrestic-bkp_${{ github.ref_name }}.tar.gz
 
               
   pack_changelog:
@@ -89,7 +82,7 @@ jobs:
 
           
   release:
-    needs: [go_build_linux, pack_scripts]
+    needs: [go_build_linux, pack_scripts, pack_changelog]
     runs-on: ubuntu-latest
     steps:
 
@@ -113,5 +106,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: $SCRIPT_RELEASE_PKG, $BUILD_OUTPUT_GZ
+          args: ${{ env.SCRIPT_RELEASE_PKG }}, ${{ env.BUILD_OUTPUT_GZ }}
         
