@@ -89,7 +89,7 @@ jobs:
 
           
   release:
-    needs: [go_build, pack_scripts]
+    needs: [go_build_linux, pack_scripts]
     runs-on: ubuntu-latest
     steps:
 
@@ -111,7 +111,7 @@ jobs:
       - name: Release
         uses: docker://antonyurchenko/git-release:v5
         env:
-          GITHUB_TOKEN: ${{ secrerts.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: $SCRIPT_RELEASE_PKG, $BUILD_OUTPUT_GZ
         
