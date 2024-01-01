@@ -1,10 +1,20 @@
 # Changelog
 
+## [0.4.0] - 2024-01-01
+
+### Changed
+
+- Move origin bash script implementation to `scripts` directory ([#54](https://github.com/liuminhaw/wrestic-bkp/pull/54), [#56](https://github.com/liuminhaw/wrestic-bkp/pull/56))
+
+### Added
+
+- Golang implementation on local, s3, and sftp with init, backup, check, and snapshots actions ([#54](https://github.com/liuminhaw/wrestic-bkp/pull/54))
+
 ## [0.3.0] - 2023-10-24
 
 ### Changed
 
-- Rename config template from `config.template` to `config.template.json` ([`2f49eb6`](https://github.com/liuminhaw/wrestic-bkp/pull/46/commits/2f49eb6)) 
+- Rename config template from `config.template` to `config.template.json` ([`2f49eb6`](https://github.com/liuminhaw/wrestic-bkp/pull/46/commits/2f49eb6))
 
 ### Added
 
@@ -70,6 +80,8 @@
 ## [0.1.0] - 2022-02-07
 
 _:seedling: Initial release._
+
+[0.4.0]: https://github.com/liuminhaw/wrestic-bkp/releases/tag/v0.4.0
 
 [0.3.0]: https://github.com/liuminhaw/restic-bkp/releases/tag/v0.3.0
 
