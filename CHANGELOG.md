@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1] - 2024-05-10
+
+### Changed
+
+- Build release executable with `CGO` option disabled to increase portability ([#64](https://github.com/liuminhaw/wrestic-bkp/pull/64)) (Min-Haw, Liu)
+- Add docs and config file into release package ([#65](https://github.com/liuminhaw/wrestic-bkp/pull/65)) (Min-Haw, Liu)
+
 ## [0.4.0] - 2024-01-01
 
 ### Changed
@@ -80,6 +87,8 @@
 ## [0.1.0] - 2022-02-07
 
 _:seedling: Initial release._
+
+[0.4.1]: https://github.com/liuminhaw/wrestic-bkp/releases/tag/v0.4.1
 
 [0.4.0]: https://github.com/liuminhaw/wrestic-bkp/releases/tag/v0.4.0
 
