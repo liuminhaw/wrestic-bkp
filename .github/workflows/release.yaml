@@ -26,7 +26,7 @@ jobs:
 
       - name: Program build
         run: |
-          go build -o ${{ env.BUILD_OUTPUT }}
+          CGO_ENABLED=0 go build -o ${{ env.BUILD_OUTPUT }}
           gzip $BUILD_OUTPUT
 
       - name: Archive built artifact
