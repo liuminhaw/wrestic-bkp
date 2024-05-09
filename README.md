@@ -8,7 +8,7 @@ Wrapper of [restic](https://github.com/restic/restic) with configurations
 
 - [Installation](#installation)
 - [Usage](#usage)
-- [Contributing](#contributing)
+- [Scripts implementation](#scripts-implementation)
 - [License](#license)
 - [Contact](#contact)
 
