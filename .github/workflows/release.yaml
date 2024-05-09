@@ -7,7 +7,8 @@ on:
 
 env:
   BUILD_OUTPUT: wrestic-bkp_${{ github.ref_name }}_linux
-  BUILD_OUTPUT_GZ: wrestic-bkp_${{ github.ref_name }}_linux.gz
+  BUILD_RELEASE_PATH: wrestic-bkp_${{ github.ref_name }}
+  BUILD_RELEASE_PKG: wrestic-bkp_${{ github.ref_name }}_linux.tar.gz
   SCRIPT_RELEASE_PATH: wrestic-bkp_${{ github.ref_name }}_scripts
   SCRIPT_RELEASE_PKG: wrestic-bkp_${{ github.ref_name }}_scripts.tar.gz
 
@@ -26,15 +27,22 @@ jobs:
 
       - name: Program build
         run: |
+          echo "Build program"
           CGO_ENABLED=0 go build -o ${{ env.BUILD_OUTPUT }}
-          gzip $BUILD_OUTPUT
+
+      - name: Pack files
+        run: |
+          echo "Pack files"
+          mkdir -p ${{ env.BUILD_RELEASE_PATH }}
+          cp -r README.md LICENSE config.template.yaml ${{ env.BUILD_OUTPUT }} ${{ env.BUILD_RELEASE_PATH }}
+          tar -czf ${{ env.BUILD_RELEASE_PKG }} ${{ env.BUILD_RELEASE_PATH }}
 
       - name: Archive built artifact
         uses: actions/upload-artifact@v3
         with:
           name: wrestic-bkp-build
           path: |
-            ${{ env.BUILD_OUTPUT_GZ }}
+            ${{ env.BUILD_RELEASE_PKG }}
           retention-days: 1
 
 
@@ -104,5 +112,5 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          args: ${{ env.SCRIPT_RELEASE_PKG }}, ${{ env.BUILD_OUTPUT_GZ }}
+          args: ${{ env.SCRIPT_RELEASE_PKG }}, ${{ env.BUILD_RELEASE_PKG }}
         
